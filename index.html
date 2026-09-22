@@ -689,7 +689,8 @@
         <p class="desc">Згенеруйте файл <code>catalog-override.js</code> і завантажте його в репозиторій GitHub Pages поруч з index.html. Сайт автоматично підтягне ваші зміни при наступному завантаженні сторінки.</p>
         <button class="big-btn" id="exportOverrideBtn">⬇ Завантажити catalog-override.js</button>
         <button class="big-btn secondary" id="copyOverrideBtn">📋 Скопіювати вміст у буфер</button>
-        <div class="field-hint" style="margin-top: 12px;">URL оverride на сайті: <span style="font-family: var(--font-mono); color: var(--accent); word-break: break-all;">https://lavandaaudit.github.io/aa/catalog-override.js</span></div>
+        <div class="field-hint" style="margin-top: 12px;">URL сайту: <span style="font-family: var(--font-mono); color: var(--accent); word-break: break-all;">https://lavandaaudit.github.io/alfa_copy_print/</span><br>
+        Файл <code>catalog-override.js</code> краще класти в репо сайту (тоді він підвантажується локально — найшвидше). Альтернатива — класти в репо адмінки <code>aa</code>, тоді сайт підтягне через CDN-запит.</div>
       </div>
 
       <div class="export-card">
@@ -723,7 +724,7 @@
           <input type="password" id="ghToken" placeholder="ghp_... або github_pat_...">
           <div class="field-hint">
             Створіть токен: <a href="https://github.com/settings/tokens/new?scopes=repo&description=alfa-admin-publish" target="_blank" style="color: var(--accent);">https://github.com/settings/tokens</a> →
-            Classic-токен зі scope <code>repo</code>, <strong>або</strong> Fine-grained token з правом <code>Contents: Read and write</code> на репо <code>lavandaaudit/aa</code>.
+            Classic-токен зі scope <code>repo</code>, <strong>або</strong> Fine-grained token з правом <code>Contents: Read and write</code> на репо сайту <code>lavandaaudit/alfa_copy_print</code>.
             <br><span style="color: var(--danger);">⚠ Токен зберігається тільки в localStorage вашого браузера. Не комітьте адмінку з токеном у репо.</span>
           </div>
         </div>
@@ -733,7 +734,7 @@
         </div>
         <div>
           <label>Repo</label>
-          <input type="text" id="ghRepo" value="aa">
+          <input type="text" id="ghRepo" value="alfa_copy_print">
         </div>
         <div>
           <label>Гілка</label>
@@ -3082,7 +3083,7 @@ window.__DEFAULT_CATEGORIES = [
       gh_committer_name: 'ghCommitterName', gh_committer_email: 'ghCommitterEmail'
     };
     const defaults = {
-      ghOwner: 'lavandaaudit', ghRepo: 'aa', ghBranch: 'main',
+      ghOwner: 'lavandaaudit', ghRepo: 'alfa_copy_print', ghBranch: 'main',
       ghPath: 'catalog-override.js',
       ghCommitterName: 'alfa-admin', ghCommitterEmail: 'admin@alfa.local'
     };
@@ -3260,7 +3261,7 @@ window.__DEFAULT_CATEGORIES = [
         `✅ Збережено в GitHub!<br>` +
         `📝 Коміт: <code style="font-family:var(--font-mono); font-size: 10px;">${(commit.sha || '').slice(0, 7)}</code> — <a href="${commitUrl}" target="_blank" style="color: var(--accent);">відкрити на GitHub</a><br>` +
         `📁 Файл: <code>${s.path}</code> у <code>${s.owner}/${s.repo}@${s.branch}</code><br>` +
-        `⏱ GitHub Pages оновиться через 1-2 хв. Перевірте: <a href="https://lavandaaudit.github.io/${s.repo === 'aa' ? '' : s.repo + '/'}" target="_blank" style="color: var(--accent);">сайт</a>`,
+        `⏱ GitHub Pages оновиться через 1-2 хв. Перевірте: <a href="https://lavandaaudit.github.io/${s.repo}/" target="_blank" style="color: var(--accent);">сайт</a>`,
         'ok'
       );
       toast('Збережено в GitHub. Сайт оновиться через 1-2 хв.', 'ok');
@@ -3277,7 +3278,7 @@ window.__DEFAULT_CATEGORIES = [
     GH_KEYS.forEach(k => localStorage.removeItem(k));
     document.getElementById('ghToken').value = '';
     document.getElementById('ghOwner').value = 'lavandaaudit';
-    document.getElementById('ghRepo').value = 'aa';
+    document.getElementById('ghRepo').value = 'alfa_copy_print';
     document.getElementById('ghBranch').value = 'main';
     document.getElementById('ghPath').value = 'catalog-override.js';
     document.getElementById('ghCommitterName').value = 'alfa-admin';
