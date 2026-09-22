@@ -1,0 +1,3059 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>alfa.copy.print — Адмінпанель керування каталогом</title>
+  <meta name="description" content="Адмінпанель керування базою товарів alfa.copy.print: редагування цін, описів, фото, тиражів; керування категоріями та підкатегоріями; експорт catalog-override.js для GitHub Pages.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-body: #08090d;
+      --bg-panel: #10121a;
+      --bg-panel-2: #14172290;
+      --bg-card: #171a26;
+      --bg-input: #0c0e15;
+      --border: #232738;
+      --border-focus: #ffde00;
+      --accent: #ffde00;
+      --accent-hover: #ffe747;
+      --accent-bg: rgba(255,222,0,.12);
+      --danger: #ff4d5e;
+      --danger-bg: rgba(255,77,94,.12);
+      --ok: #10b981;
+      --text-main: #f1f5f9;
+      --text-muted: #8e99ac;
+      --text-dim: #647087;
+      --r-sm: 6px;
+      --r-md: 10px;
+      --r-lg: 14px;
+      --font: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-display: 'Unbounded', 'Manrope', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: var(--font);
+      background: var(--bg-body);
+      color: var(--text-main);
+      font-size: 13px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: clip;
+    }
+    a { color: inherit; text-decoration: none; }
+    button, input, select, textarea {
+      font-family: inherit; font-size: 12.5px; outline: none; border: none;
+    }
+    input, select, textarea {
+      background: var(--bg-input); color: var(--text-main);
+      border: 1px solid var(--border); border-radius: var(--r-sm);
+      padding: 7px 10px; width: 100%;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(255,222,0,.12);
+    }
+    textarea { resize: vertical; min-height: 60px; line-height: 1.5; }
+    label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+    .row { display: flex; gap: 10px; }
+    .row > * { flex: 1; }
+    .row.fixed > * { flex: initial; }
+
+    /* Topbar */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      height: 56px; padding: 0 18px;
+      background: rgba(14,16,23,.96);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 10px;
+      font-family: var(--font-display); font-weight: 700; font-size: 14px; letter-spacing: -.02em;
+    }
+    .brand .brand-dots {
+      display: grid; grid-template-columns: repeat(2,6px); gap: 2.5px;
+      background: #1c202d; padding: 3px; border-radius: 4px; border: 1px solid #2d3345;
+    }
+    .brand .brand-dots span { width:6px; height:6px; border-radius:1.5px; }
+    .dot-c { background: #00d2ff; } .dot-m { background: #ff007f; }
+    .dot-y { background: #ffde00; } .dot-k { background: #fff; }
+    .brand .brand-text { color: var(--text-main); }
+    .brand .brand-text span { color: var(--accent); }
+    .brand .badge-admin {
+      font-family: var(--font); font-size: 9px; letter-spacing: .12em; font-weight: 800;
+      background: var(--accent); color: #000; padding: 2px 6px; border-radius: 3px;
+      margin-left: 4px;
+    }
+
+    .topbar-actions { display: flex; align-items: center; gap: 8px; }
+    .btn {
+      background: var(--bg-card); color: var(--text-main);
+      border: 1px solid var(--border); border-radius: var(--r-sm);
+      padding: 7px 12px; font-weight: 600; cursor: pointer; font-size: 12px;
+      display: inline-flex; align-items: center; gap: 6px;
+      transition: all .15s ease;
+    }
+    .btn:hover { border-color: #2f3550; background: #1c2030; }
+    .btn-primary { background: var(--accent); color: #000; border-color: var(--accent); }
+    .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    .btn-danger { background: transparent; color: var(--danger); border-color: rgba(255,77,94,.35); }
+    .btn-danger:hover { background: var(--danger-bg); }
+    .btn-sm { padding: 4px 8px; font-size: 11px; }
+    .btn-icon { padding: 5px 8px; }
+
+    /* Tabs */
+    .tabs-bar {
+      position: sticky; top: 56px; z-index: 99;
+      background: rgba(14,16,23,.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 18px;
+      display: flex; gap: 4px; align-items: center;
+    }
+    .tab-btn {
+      padding: 7px 14px; background: transparent; color: var(--text-muted);
+      border-radius: var(--r-sm); font-weight: 600; cursor: pointer; font-size: 12px;
+      transition: all .15s ease; border: 1px solid transparent;
+    }
+    .tab-btn:hover { color: #fff; background: rgba(255,255,255,.04); }
+    .tab-btn.active {
+      background: var(--bg-card); color: var(--accent);
+      border-color: var(--border);
+      box-shadow: 0 2px 5px rgba(0,0,0,.2);
+    }
+    .tab-btn .count {
+      display: inline-block; margin-left: 6px;
+      background: var(--accent-bg); color: var(--accent);
+      font-size: 10px; padding: 1px 6px; border-radius: 8px; font-weight: 700;
+    }
+    .tabs-spacer { flex: 1; }
+    .save-indicator {
+      font-size: 11px; color: var(--text-dim);
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .save-indicator .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+    .save-indicator.dirty .dot { background: var(--accent); }
+    .save-indicator.saving .dot { background: var(--text-muted); }
+
+    /* Layout */
+    main {
+      padding: 18px;
+      max-width: 1600px; margin: 0 auto;
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fade .15s ease; }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+    /* Two-column layout for products tab */
+    .products-layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 16px;
+      min-height: calc(100vh - 130px);
+    }
+    @media (max-width: 1024px) {
+      .products-layout { grid-template-columns: 1fr; }
+    }
+
+    /* Product list panel */
+    .list-panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .list-panel-header {
+      padding: 12px 14px; border-bottom: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .list-panel-header .top-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    }
+    .list-panel-header h2 {
+      font-family: var(--font-display); font-size: 13px; font-weight: 700; letter-spacing: -.01em;
+    }
+    .search-input {
+      width: 100%; padding: 7px 10px 7px 30px;
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: var(--r-sm); color: var(--text-main);
+    }
+    .search-wrap { position: relative; }
+    .search-wrap::before {
+      content: '🔍'; position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+      font-size: 11px; opacity: .5;
+    }
+    .filter-select {
+      padding: 6px 10px; background: var(--bg-input);
+      border: 1px solid var(--border); border-radius: var(--r-sm);
+      color: var(--text-main); font-size: 11px;
+    }
+    .filter-select option { background: var(--bg-panel); }
+
+    .product-list {
+      flex: 1; overflow-y: auto; max-height: calc(100vh - 260px);
+    }
+    .product-row {
+      padding: 9px 14px; border-bottom: 1px solid var(--border);
+      cursor: pointer; transition: background .12s ease;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .product-row:hover { background: rgba(255,222,0,.04); }
+    .product-row.active { background: var(--accent-bg); border-left: 3px solid var(--accent); padding-left: 11px; }
+    .product-row .p-icon { font-size: 18px; flex-shrink: 0; width: 22px; text-align: center; }
+    .product-row .p-main { flex: 1; min-width: 0; }
+    .product-row .p-name {
+      font-weight: 600; color: var(--text-main); font-size: 12.5px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .product-row .p-meta {
+      font-size: 10.5px; color: var(--text-dim); margin-top: 2px;
+    }
+    .product-row .p-price {
+      font-family: var(--font-mono); font-size: 11px; color: var(--accent);
+      font-weight: 600; white-space: nowrap;
+    }
+    .product-row .p-photo-indicator {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--text-dim);
+    }
+    .product-row .p-photo-indicator.has { background: var(--ok); }
+    .product-row .p-new-badge {
+      font-size: 9px; padding: 1px 5px; background: var(--ok); color: #000;
+      border-radius: 3px; font-weight: 700; letter-spacing: .04em;
+    }
+
+    /* Editor panel */
+    .editor-panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .editor-header {
+      padding: 14px 16px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .editor-header h2 {
+      font-family: var(--font-display); font-size: 14px; font-weight: 700; letter-spacing: -.01em;
+      flex: 1; min-width: 0;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .editor-header .editor-actions { display: flex; gap: 6px; }
+
+    .editor-body {
+      flex: 1; overflow-y: auto; padding: 16px;
+      max-height: calc(100vh - 240px);
+    }
+    .editor-empty {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 60px 20px; text-align: center; color: var(--text-muted);
+    }
+    .editor-empty .emoji { font-size: 48px; opacity: .3; margin-bottom: 12px; }
+    .editor-empty h3 { font-family: var(--font-display); font-size: 16px; color: var(--text-main); margin-bottom: 6px; }
+    .editor-empty p { font-size: 12px; max-width: 280px; line-height: 1.6; }
+
+    .form-section { margin-bottom: 22px; }
+    .form-section-title {
+      font-size: 10.5px; font-weight: 700; color: var(--accent);
+      text-transform: uppercase; letter-spacing: .08em;
+      margin-bottom: 10px; padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .form-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    }
+    .form-grid .full { grid-column: 1 / -1; }
+    .form-grid .third { grid-column: span 1; }
+    @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
+
+    /* Tier editor (price by тираж) */
+    .tiers-editor { border: 1px solid var(--border); border-radius: var(--r-sm); overflow: hidden; }
+    .tiers-row {
+      display: grid; grid-template-columns: 60px 1fr 1fr 28px; gap: 0;
+      border-bottom: 1px solid var(--border); align-items: center;
+    }
+    .tiers-row:last-child { border-bottom: none; }
+    .tiers-row > input, .tiers-row > .tier-label {
+      border: none; border-radius: 0; border-right: 1px solid var(--border);
+      background: transparent;
+    }
+    .tiers-row > .tier-label {
+      padding: 7px 8px; font-size: 10.5px; color: var(--text-dim);
+      font-family: var(--font-mono); text-align: center; font-weight: 600;
+    }
+    .tiers-row > input { padding: 7px 8px; font-family: var(--font-mono); font-size: 12px; }
+    .tiers-row .tier-del {
+      background: transparent; color: var(--danger); cursor: pointer;
+      padding: 0; height: 100%; border-right: none;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .tiers-row .tier-del:hover { background: var(--danger-bg); }
+    .tiers-header {
+      display: grid; grid-template-columns: 60px 1fr 1fr 28px; gap: 0;
+      background: var(--bg-input); border-bottom: 1px solid var(--border);
+    }
+    .tiers-header > div {
+      padding: 6px 8px; font-size: 10px; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .04em; font-weight: 600;
+      border-right: 1px solid var(--border);
+    }
+    .tiers-header > div:last-child { border-right: none; }
+
+    /* Photo uploader */
+    .photo-uploader {
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .photo-preview {
+      width: 130px; height: 130px; flex-shrink: 0;
+      background: var(--bg-input); border: 1px dashed var(--border);
+      border-radius: var(--r-sm);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; position: relative; cursor: pointer;
+      transition: border-color .15s ease;
+    }
+    .photo-preview:hover { border-color: var(--accent); }
+    .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .photo-preview .placeholder { color: var(--text-dim); font-size: 11px; text-align: center; padding: 10px; }
+    .photo-controls { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+    .photo-size-hint { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+
+    /* Categories tab */
+    .cat-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    }
+    @media (max-width: 1024px) { .cat-grid { grid-template-columns: 1fr; } }
+    .cat-card {
+      background: var(--bg-panel); border: 1px solid var(--border);
+      border-radius: var(--r-md); padding: 16px;
+    }
+    .cat-card-header {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+      padding-bottom: 12px; border-bottom: 1px solid var(--border);
+    }
+    .cat-card-header .cat-icon {
+      font-size: 24px; width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg-input); border-radius: var(--r-sm);
+    }
+    .cat-card-header .cat-title {
+      flex: 1; min-width: 0;
+    }
+    .cat-card-header .cat-title h3 {
+      font-family: var(--font-display); font-size: 13px; font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .cat-card-header .cat-title .cat-key {
+      font-family: var(--font-mono); font-size: 10.5px; color: var(--text-dim);
+    }
+    .cat-card-header .cat-actions { display: flex; gap: 4px; }
+
+    .sub-list { margin-top: 10px; }
+    .sub-row {
+      display: flex; align-items: center; gap: 8px; padding: 6px 0;
+      border-bottom: 1px dashed var(--border);
+    }
+    .sub-row:last-child { border-bottom: none; }
+    .sub-row .sub-icon { font-size: 14px; width: 20px; text-align: center; }
+    .sub-row .sub-name { flex: 1; font-size: 12px; }
+    .sub-row .sub-key {
+      font-family: var(--font-mono); font-size: 10px; color: var(--text-dim);
+    }
+    .sub-row .sub-del { background: none; color: var(--danger); cursor: pointer; padding: 2px 6px; font-size: 14px; }
+
+    .sub-add-form {
+      display: flex; gap: 6px; margin-top: 8px;
+      padding-top: 8px; border-top: 1px solid var(--border);
+    }
+    .sub-add-form input { padding: 5px 8px; font-size: 11px; }
+
+    /* Prices tab */
+    .price-block {
+      background: var(--bg-panel); border: 1px solid var(--border);
+      border-radius: var(--r-md); margin-bottom: 16px; overflow: hidden;
+    }
+    .price-block-header {
+      padding: 12px 16px; background: var(--bg-input);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    }
+    .price-block-header h3 {
+      font-family: var(--font-display); font-size: 13px; font-weight: 700;
+    }
+    .price-block-header .hint { font-size: 11px; color: var(--text-dim); }
+    .price-block-body { padding: 16px; }
+
+    table.tiers-table {
+      width: 100%; border-collapse: collapse;
+    }
+    table.tiers-table th, table.tiers-table td {
+      padding: 6px 10px; text-align: left;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+    table.tiers-table th {
+      color: var(--text-muted); font-weight: 600;
+      text-transform: uppercase; font-size: 10px; letter-spacing: .04em;
+    }
+    table.tiers-table tr:last-child td { border-bottom: none; }
+    table.tiers-table input {
+      padding: 5px 8px; font-family: var(--font-mono); font-size: 11px;
+    }
+
+    .kv-list { display: flex; flex-direction: column; gap: 8px; }
+    .kv-row {
+      display: grid; grid-template-columns: 1fr 120px 28px; gap: 8px; align-items: center;
+    }
+    .kv-row input { padding: 6px 8px; font-size: 11.5px; }
+    .kv-row .kv-label { font-size: 11px; color: var(--text-muted); }
+    .kv-row .kv-del { background: none; color: var(--danger); cursor: pointer; padding: 4px; font-size: 14px; }
+
+    /* Export tab */
+    .export-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    }
+    @media (max-width: 1024px) { .export-grid { grid-template-columns: 1fr; } }
+    .export-card {
+      background: var(--bg-panel); border: 1px solid var(--border);
+      border-radius: var(--r-md); padding: 20px;
+    }
+    .export-card h3 {
+      font-family: var(--font-display); font-size: 15px; font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .export-card .desc { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.6; }
+    .export-card .big-btn {
+      display: block; width: 100%; padding: 14px;
+      background: var(--accent); color: #000; border: none;
+      border-radius: var(--r-sm); font-weight: 700; font-size: 13px;
+      cursor: pointer; margin-bottom: 8px;
+      transition: background .15s ease;
+    }
+    .export-card .big-btn:hover { background: var(--accent-hover); }
+    .export-card .big-btn.secondary { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border); }
+    .export-card .big-btn.secondary:hover { background: #1c2030; }
+
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;
+    }
+    .stat-card {
+      background: var(--bg-panel); border: 1px solid var(--border);
+      border-radius: var(--r-md); padding: 14px;
+    }
+    .stat-card .stat-label {
+      font-size: 10px; color: var(--text-dim); text-transform: uppercase;
+      letter-spacing: .06em; font-weight: 600; margin-bottom: 4px;
+    }
+    .stat-card .stat-value {
+      font-family: var(--font-display); font-size: 22px; font-weight: 700;
+      color: var(--accent);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: var(--bg-card); border: 1px solid var(--border);
+      padding: 10px 16px; border-radius: var(--r-sm);
+      font-size: 12px; color: var(--text-main);
+      opacity: 0; pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+      z-index: 1000; max-width: 400px;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.ok { border-color: var(--ok); }
+    .toast.err { border-color: var(--danger); }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.7);
+      backdrop-filter: blur(4px); z-index: 200;
+      display: none; align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--bg-panel); border: 1px solid var(--border);
+      border-radius: var(--r-md); padding: 24px;
+      max-width: 560px; width: 100%; max-height: 90vh; overflow-y: auto;
+    }
+    .modal h3 {
+      font-family: var(--font-display); font-size: 16px; margin-bottom: 12px;
+    }
+    .modal-actions {
+      display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px;
+    }
+
+    /* Misc */
+    .empty-state {
+      padding: 40px 20px; text-align: center; color: var(--text-muted);
+    }
+    .field-hint {
+      font-size: 10.5px; color: var(--text-dim); margin-top: 3px; line-height: 1.4;
+    }
+    .inline-add {
+      display: flex; gap: 6px; margin-top: 10px; align-items: center;
+    }
+    .inline-add input { padding: 6px 8px; font-size: 11.5px; }
+    .checkbox-field {
+      display: flex; align-items: center; gap: 8px; padding: 8px 0;
+    }
+    .checkbox-field input[type="checkbox"] {
+      width: auto; margin: 0; cursor: pointer;
+    }
+    .checkbox-field label { margin: 0; text-transform: none; font-size: 12px; color: var(--text-main); cursor: pointer; }
+    .pill-list {
+      display: flex; flex-wrap: wrap; gap: 4px; padding: 6px;
+      background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--r-sm);
+      min-height: 36px;
+    }
+    .pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 8px; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 4px; font-size: 11px; color: var(--text-main);
+      font-family: var(--font-mono);
+    }
+    .pill .pill-del { color: var(--danger); cursor: pointer; font-size: 12px; line-height: 1; }
+    .pill-add-input {
+      flex: 1; min-width: 120px; border: none !important; background: transparent !important;
+      padding: 3px 4px !important; box-shadow: none !important;
+    }
+    .pill-add-input:focus { box-shadow: none !important; }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-dots">
+      <span class="dot-c"></span><span class="dot-m"></span>
+      <span class="dot-y"></span><span class="dot-k"></span>
+    </div>
+    <div class="brand-text">alfa<span>.copy.print</span><span class="badge-admin">ADMIN</span></div>
+  </div>
+  <div class="topbar-actions">
+    <span class="save-indicator" id="saveIndicator">
+      <span class="dot"></span><span id="saveText">Збережено</span>
+    </span>
+    <button class="btn" id="importBtn">⇧ Імпорт JSON</button>
+    <button class="btn btn-danger" id="resetBtn">Скинути</button>
+    <button class="btn btn-primary" id="exportBtn">⬇ Експорт catalog-override.js</button>
+  </div>
+</header>
+
+<nav class="tabs-bar">
+  <button class="tab-btn active" data-tab="products">Товари <span class="count" id="cntProducts">0</span></button>
+  <button class="tab-btn" data-tab="categories">Категорії <span class="count" id="cntCategories">0</span></button>
+  <button class="tab-btn" data-tab="prices">Ціни / Тарифи</button>
+  <button class="tab-btn" data-tab="export">Експорт / Імпорт</button>
+  <div class="tabs-spacer"></div>
+</nav>
+
+<main>
+  <!-- ============ PRODUCTS TAB ============ -->
+  <section class="tab-content active" id="tab-products">
+    <div class="products-layout">
+      <!-- List panel -->
+      <div class="list-panel">
+        <div class="list-panel-header">
+          <div class="top-row">
+            <h2>База товарів</h2>
+            <button class="btn btn-primary btn-sm" id="addProductBtn">+ Додати</button>
+          </div>
+          <div class="search-wrap">
+            <input type="text" class="search-input" id="productSearch" placeholder="Пошук за назвою, ID...">
+          </div>
+          <select class="filter-select" id="categoryFilter">
+            <option value="">Всі категорії</option>
+          </select>
+        </div>
+        <div class="product-list" id="productList"></div>
+      </div>
+
+      <!-- Editor panel -->
+      <div class="editor-panel">
+        <div class="editor-header">
+          <h2 id="editorTitle">Оберіть товар</h2>
+          <div class="editor-actions" id="editorActions"></div>
+        </div>
+        <div class="editor-body" id="editorBody">
+          <div class="editor-empty">
+            <div class="emoji">📦</div>
+            <h3>Редактор товару</h3>
+            <p>Виберіть товар зі списку ліворуч або натисніть «+ Додати», щоб створити нову позицію каталогу.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CATEGORIES TAB ============ -->
+  <section class="tab-content" id="tab-categories">
+    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <div>
+        <h2 style="font-family: var(--font-display); font-size: 18px; margin-bottom: 4px;">Категорії та підкатегорії</h2>
+        <p style="font-size: 12px; color: var(--text-muted);">Групуйте товари за розділами. Підкатегорії — для фільтрації всередині категорії.</p>
+      </div>
+      <button class="btn btn-primary" id="addCategoryBtn">+ Нова категорія</button>
+    </div>
+    <div class="cat-grid" id="categoriesList"></div>
+  </section>
+
+  <!-- ============ PRICES TAB ============ -->
+  <section class="tab-content" id="tab-prices">
+    <div style="margin-bottom: 16px;">
+      <h2 style="font-family: var(--font-display); font-size: 18px; margin-bottom: 4px;">Тарифи та ціни</h2>
+      <p style="font-size: 12px; color: var(--text-muted);">Глобальні прайси калькулятора. Зміни вносяться до catalog-override.js і застосовуються на сайті після публікації.</p>
+    </div>
+
+    <div class="price-block">
+      <div class="price-block-header">
+        <h3>📐 Формат аркуша А3</h3>
+        <span class="hint">Базовий аркуш для розкладки</span>
+      </div>
+      <div class="price-block-body" id="sheetBlock"></div>
+    </div>
+
+    <div class="price-block">
+      <div class="price-block-header">
+        <h3>🖨️ Тиражні щаблі друку</h3>
+        <span class="hint">Ціна за аркуш А3 при відповідній кількості</span>
+      </div>
+      <div class="price-block-body" id="printTiersBlock"></div>
+    </div>
+
+    <div class="price-block">
+      <div class="price-block-header">
+        <h3>📄 Папір / носії</h3>
+        <span class="hint">Ціна за аркуш А3</span>
+      </div>
+      <div class="price-block-body" id="paperBlock"></div>
+    </div>
+
+    <div class="price-block">
+      <div class="price-block-header">
+        <h3>✨ Ламінація</h3>
+        <span class="hint">Ціна за аркуш А3</span>
+      </div>
+      <div class="price-block-body" id="laminationBlock"></div>
+    </div>
+
+    <div class="price-block">
+      <div class="price-block-header">
+        <h3>🛠️ Постпресс (обробка)</h3>
+        <span class="hint">Ціна за операцію + setup</span>
+      </div>
+      <div class="price-block-body" id="finishingBlock"></div>
+    </div>
+
+    <div class="price-block">
+      <div class="price-block-header">
+        <h3>⚙️ Допечатна підготовка</h3>
+        <span class="hint">Фіксована ціна за макет</span>
+      </div>
+      <div class="price-block-body" id="prepressBlock"></div>
+    </div>
+  </section>
+
+  <!-- ============ EXPORT TAB ============ -->
+  <section class="tab-content" id="tab-export">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Товарів усього</div>
+        <div class="stat-value" id="statProducts">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Категорій</div>
+        <div class="stat-value" id="statCategories">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">З фото</div>
+        <div class="stat-value" id="statPhotos">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Останнє збереження</div>
+        <div class="stat-value" id="statSaved" style="font-size: 14px;">—</div>
+      </div>
+    </div>
+
+    <div class="export-grid">
+      <div class="export-card">
+        <h3>📄 catalog-override.js</h3>
+        <p class="desc">Згенеруйте файл <code>catalog-override.js</code> і завантажте його в репозиторій GitHub Pages поруч з index.html. Сайт автоматично підтягне ваші зміни при наступному завантаженні сторінки.</p>
+        <button class="big-btn" id="exportOverrideBtn">⬇ Завантажити catalog-override.js</button>
+        <button class="big-btn secondary" id="copyOverrideBtn">📋 Скопіювати вміст у буфер</button>
+        <div class="field-hint" style="margin-top: 12px;">URL оverride на сайті: <span style="font-family: var(--font-mono); color: var(--accent);">https://lavandaaudit.github.io/alfa_admin/catalog-override.js</span></div>
+      </div>
+
+      <div class="export-card">
+        <h3>💾 Резервна копія (JSON)</h3>
+        <p class="desc">Експортуйте повний стан каталогу у JSON для резервного копіювання або переносу між пристроями. Формат сумісний з імпортом.</p>
+        <button class="big-btn" id="exportJsonBtn">⬇ Завантажити admin-backup.json</button>
+        <button class="big-btn secondary" id="copyJsonBtn">📋 Скопіювати JSON у буфер</button>
+      </div>
+
+      <div class="export-card">
+        <h3>⇧ Імпорт JSON</h3>
+        <p class="desc">Відновіть каталог з раніше збереженого JSON-файлу. Поточні зміни буде замінено.</p>
+        <button class="big-btn secondary" id="importJsonBtn">Вибрати JSON-файл…</button>
+        <input type="file" id="importJsonInput" accept="application/json,.json" style="display:none">
+      </div>
+
+      <div class="export-card">
+        <h3>🌐 Попередній перегляд</h3>
+        <p class="desc">Відкрийте каталог у новій вкладці, щоб побачити, як зміни виглядатимуть на сайті.</p>
+        <button class="big-btn secondary" id="previewBtn">👁 Відкрити live-прев'ю</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast">Повідомлення</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+// === DEFAULT CATALOG DATA (extracted from source site) ===
+// Embedded from the original alfa.copy.print index.html
+// Will be injected below by build script
+</script>
+
+<script id="default-data-script">
+// === DEFAULT CATALOG (extracted from alfa.copy.print source) ===
+window.__DEFAULT_PRICES = {
+      sheet: { width: 297, height: 420, usableW: 291, usableH: 414, bleed: 2 },
+      printTiers: {
+        "1+0": [
+          { max: 10, price: 3.20 }, { max: 50, price: 2.40 }, { max: 100, price: 1.90 },
+          { max: 250, price: 1.60 }, { max: 500, price: 1.40 }, { max: 1000, price: 1.30 },
+          { max: Infinity, price: 1.20 }
+        ],
+        "1+1": [
+          { max: 10, price: 5.50 }, { max: 50, price: 4.30 }, { max: 100, price: 3.50 },
+          { max: 250, price: 2.90 }, { max: 500, price: 2.50 }, { max: 1000, price: 2.20 },
+          { max: Infinity, price: 2.00 }
+        ],
+        "4+0": [
+          { max: 10, price: 18.00 }, { max: 50, price: 14.50 }, { max: 100, price: 12.00 },
+          { max: 250, price: 9.80 }, { max: 500, price: 8.20 }, { max: 1000, price: 7.00 },
+          { max: Infinity, price: 6.20 }
+        ],
+        "4+4": [
+          { max: 10, price: 32.00 }, { max: 50, price: 26.00 }, { max: 100, price: 21.50 },
+          { max: 250, price: 17.50 }, { max: 500, price: 14.50 }, { max: 1000, price: 12.50 },
+          { max: Infinity, price: 11.00 }
+        ]
+      },
+      paper: {
+        "offset_80": { name: "80 г/м² Офсетний", price: 1.20 },
+        "coated_115": { name: "115 г/м² Крейдований", price: 2.10 },
+        "coated_130": { name: "130 г/м² Крейдований", price: 2.40 },
+        "coated_150": { name: "150 г/м² Крейдований", price: 2.80 },
+        "coated_170": { name: "170 г/м² Крейдований", price: 3.20 },
+        "coated_200": { name: "200 г/м² Крейдований", price: 3.80 },
+        "coated_250": { name: "250 г/м² Крейдований", price: 4.50 },
+        "coated_300": { name: "300 г/м² Крейдований", price: 5.40 },
+        "coated_350": { name: "350 г/м² Преміум картон", price: 6.50 },
+        "kraft_200": { name: "200 г/м² Крафт бурий", price: 5.00 },
+        "design_300": { name: "300 г/м² Дизайнерський картон", price: 18.00 },
+        "selfadhesive_paper": { name: "Самоклейка Raflatac (папір)", price: 12.00 },
+        "selfadhesive_vinyl": { name: "Плівка Оракал (вініл)", price: 24.00 }
+      },
+      blockSetup: 500,
+      prepress: { name: "Допечатна підготовка макету", price: 500 },
+      lamination: {
+        "none": { name: "Без ламінації", price: 0 },
+        "matte_10": { name: "Матова 1+0", price: 8.50 },
+        "matte_11": { name: "Матова 1+1", price: 15.00 },
+        "gloss_10": { name: "Глянцева 1+0", price: 7.00 },
+        "gloss_11": { name: "Глянцева 1+1", price: 12.00 },
+        "softtouch_10": { name: "Soft-Touch 1+0", price: 14.00 },
+        "softtouch_11": { name: "Soft-Touch 1+1", price: 26.00 }
+      },
+      finishing: {
+        scoring: { name: "Біговка", price: 0.60, setup: 500 },
+        folding: { name: "Фальцювання", price: 0.50, setup: 500 },
+        corners: { name: "Скруглення кутів", price: 0.50, setup: 500 },
+        hole: { name: "Свердління отвору", price: 2.50, setup: 500 },
+        staples: { name: "Скоби", price: 2.00, setup: 500 },
+        spring: { name: "Пружина", price: 32.00, setup: 500 },
+        plotter: { name: "Плотерна висічка", price: 0.70, setup: 500 },
+        perforation: { name: "Перфорація", price: 0.45, setup: 500 }
+      }
+    };
+window.__DEFAULT_PRODUCTS = [
+    {
+        "id": "business-card-standard", "name": "Візитка стандарт (90×50)", "category": "polygraphy", "icon": "💳",
+        "desc": "Класична ділова візитка на щільному картоні 350 г/м² з ідеальною геометрією різу.",
+        "defaultW": 90, "defaultH": 50, "defaultPaper": "coated_350", "allowedPapers": ["coated_350", "coated_300", "design_300", "kraft_200"],
+        "defaultColor": "4+0", "minQty": 100, "priceFrom": "6,25"
+    },
+    {
+        "id": "business-card-euro", "name": "Візитка Євро (85×55)", "category": "polygraphy", "icon": "💶",
+        "desc": "Європейський стандарт під гаманці та міжнародні виставки.",
+        "defaultW": 85, "defaultH": 55, "defaultPaper": "coated_350", "allowedPapers": ["coated_350", "coated_300", "design_300"],
+        "defaultColor": "4+4", "minQty": 100, "priceFrom": "6,95"
+    },
+    {
+        "id": "business-card-softtouch", "name": "Візитка Soft-Touch Преміум", "category": "polygraphy", "icon": "✨",
+        "desc": "Оксамитова тактильна ламінація «шовковистий дотик» 350 г/м².",
+        "defaultW": 90, "defaultH": 50, "defaultPaper": "coated_350", "allowedPapers": ["coated_350"],
+        "defaultColor": "4+4", "defaultLam": "softtouch_11", "minQty": 100, "priceFrom": "13,00"
+    },
+    {
+        "id": "business-card-rounded", "name": "Візитка зі скругленими кутами", "category": "polygraphy", "icon": "🔄",
+        "desc": "Скруглені 4 кути (радіус 3 або 5 мм) проти загинання в кишені.",
+        "defaultW": 90, "defaultH": 50, "defaultPaper": "coated_350", "allowedPapers": ["coated_350", "coated_300"],
+        "defaultColor": "4+4", "defaultCorners": true, "minQty": 100, "priceFrom": "12,00"
+    },
+    {
+        "id": "business-card-double-fold", "name": "Візитка подвійна зі згином", "category": "polygraphy", "icon": "📖",
+        "desc": "Розмір 180×50 мм складається до 90×50 мм, 4 робочі сторони з біговкою.",
+        "defaultW": 180, "defaultH": 50, "defaultPaper": "coated_350", "allowedPapers": ["coated_350", "coated_300"],
+        "defaultColor": "4+4", "defaultScoring": true, "minQty": 100, "priceFrom": "14,00"
+    },
+    {
+        "id": "business-card-vertical-fold", "name": "Візитка-книжечка вертикальна", "category": "polygraphy", "icon": "📑",
+        "desc": "Розгортка 90×100 мм з біговкою, складається вертикально до 90×50 мм.",
+        "defaultW": 90, "defaultH": 100, "defaultPaper": "coated_350", "allowedPapers": ["coated_350", "coated_300"],
+        "defaultColor": "4+4", "defaultScoring": true, "minQty": 100, "priceFrom": "14,00"
+    },
+    {
+        "id": "business-card-kraft", "name": "Візитка Еко-Крафт (200 г/м²)", "category": "polygraphy", "icon": "🌿",
+        "desc": "Автентичний бурий крафт для кав'ярень, майстерень та еко-брендів.",
+        "defaultW": 90, "defaultH": 50, "defaultPaper": "kraft_200", "allowedPapers": ["kraft_200"],
+        "defaultColor": "1+0", "minQty": 100, "priceFrom": "5,45"
+    },
+    {
+        "id": "business-card-designer", "name": "Візитка на дизайнерському картоні", "category": "polygraphy", "icon": "💎",
+        "desc": "Фактурний картон «льон» або білий перламутр Majestic 300 г/м².",
+        "defaultW": 90, "defaultH": 50, "defaultPaper": "design_300", "allowedPapers": ["design_300"],
+        "defaultColor": "4+0", "minQty": 50, "priceFrom": "12,00"
+    },
+    {
+        "id": "business-card-mini-strip", "name": "Міні-візитка / смужка (85×25)", "category": "polygraphy", "icon": "🏷️",
+        "desc": "Нестандартний вузький формат для творчих студій, ювелірів та фотографів.",
+        "defaultW": 85, "defaultH": 25, "defaultPaper": "coated_350", "allowedPapers": ["coated_350", "coated_300"],
+        "defaultColor": "4+4", "minQty": 100, "priceFrom": "6,20"
+    },
+    {
+        "id": "tag-clothing", "name": "Бірка навісна для одягу", "category": "polygraphy", "icon": "🏷️",
+        "desc": "Розмір 50×90 мм на 350 г/м² зі свердлінням отвору 4 мм під нитку або пломбу.",
+        "defaultW": 50, "defaultH": 90, "defaultPaper": "coated_350", "allowedPapers": ["coated_350", "kraft_200", "design_300"],
+        "defaultColor": "4+4", "defaultHole": true, "minQty": 100, "priceFrom": "14,00"
+    },
+    {
+        "id": "tag-rounded-hole", "name": "Бірка кругла з отвором (Ø50 мм)", "category": "polygraphy", "icon": "🔘",
+        "desc": "Кругла плотерна висічка діаметром 50 мм з отвором 3-5 мм по центру краю.",
+        "defaultW": 50, "defaultH": 50, "defaultPaper": "coated_350", "allowedPapers": ["coated_350"],
+        "defaultColor": "4+4", "defaultPlotter": true, "defaultHole": true, "minQty": 100, "priceFrom": "19,00"
+    },
+    {
+        "id": "tag-jewelry-mini", "name": "Ювелірна бірка міні (40×20)", "category": "polygraphy", "icon": "💍",
+        "desc": "Мініатюрний ярлик 40×20 мм зі свердлінням отвору 2 мм для пломбування прикрас.",
+        "defaultW": 40, "defaultH": 20, "defaultPaper": "coated_350", "allowedPapers": ["coated_350"],
+        "defaultColor": "4+0", "defaultHole": true, "minQty": 200, "priceFrom": "7,75"
+    },
+    {
+        "id": "price-tag-retail", "name": "Цінник акційний вітринний (70×100)", "category": "polygraphy", "icon": "🏷️",
+        "desc": "Яскравий цінник акцій 'Sale / Знижка' на цупкому папері 250 г/м².",
+        "defaultW": 70, "defaultH": 100, "defaultPaper": "coated_250", "allowedPapers": ["coated_200", "coated_250", "coated_300"],
+        "defaultColor": "4+0", "minQty": 100, "priceFrom": "6,60"
+    },
+
+    {
+        "id": "flyer-euro", "name": "Єврофлаєр (99×210)", "category": "advertising", "icon": "📄",
+        "desc": "Лідер промо-поліграфії: 6 штук на 1 аркуші А3, двосторонній повноколір.",
+        "defaultW": 99, "defaultH": 210, "defaultPaper": "coated_130", "allowedPapers": ["coated_115", "coated_130", "coated_150", "coated_170", "coated_250"],
+        "defaultColor": "4+4", "minQty": 100, "priceFrom": "9,85"
+    },
+    {
+        "id": "flyer-a6", "name": "Флаєр А6 (105×148)", "category": "advertising", "icon": "📑",
+        "desc": "Зручний кишеньковий розмір: рівно 8 штук на 1 аркуші А3 без залишків.",
+        "defaultW": 105, "defaultH": 148, "defaultPaper": "coated_130", "allowedPapers": ["coated_115", "coated_130", "coated_150", "coated_200"],
+        "defaultColor": "4+0", "minQty": 100, "priceFrom": "7,20"
+    },
+    {
+        "id": "flyer-a5", "name": "Флаєр А5 (148×210)", "category": "advertising", "icon": "📋",
+        "desc": "Універсальний інформаційний лист для меню доставки, презентацій та роздачі.",
+        "defaultW": 148, "defaultH": 210, "defaultPaper": "coated_130", "allowedPapers": ["coated_115", "coated_130", "coated_150", "coated_170", "coated_250"],
+        "defaultColor": "4+4", "minQty": 100, "priceFrom": "12,00"
+    },
+    {
+        "id": "flyer-a7-mini", "name": "Міні-флаєр А7 (74×105)", "category": "advertising", "icon": "🎟️",
+        "desc": "Вкладиш у посилки та пакети з промокодом на повторну покупку.",
+        "defaultW": 74, "defaultH": 105, "defaultPaper": "coated_130", "allowedPapers": ["coated_130", "coated_150"],
+        "defaultColor": "4+0", "minQty": 100, "priceFrom": "6,45"
+    },
+    {
+        "id": "flyer-square-105", "name": "Флаєр квадратний (105×105)", "category": "advertising", "icon": "🔲",
+        "desc": "Сучасний формат під квадратну графіку Instagram та арт-події.",
+        "defaultW": 105, "defaultH": 105, "defaultPaper": "coated_150", "allowedPapers": ["coated_130", "coated_150", "coated_200"],
+        "defaultColor": "4+4", "minQty": 100, "priceFrom": "9,90"
+    },
+    {
+        "id": "flyer-panorama-narrow", "name": "Флаєр панорамний вузький (70×210)", "category": "advertising", "icon": "📏",
+        "desc": "Витягнутий промо-купон для меню барів, переліку послуг або знижок.",
+        "defaultW": 70, "defaultH": 210, "defaultPaper": "coated_150", "allowedPapers": ["coated_130", "coated_150", "coated_200"],
+        "defaultColor": "4+4", "minQty": 100, "priceFrom": "11,00"
+    },
+    {
+        "id": "coupon-perforated", "name": "Купон зі знижкою та перфорацією", "category": "advertising", "icon": "🎫",
+        "desc": "Розмір 70×140 мм з пунктирною лінією легкого відриву для корінця знижки.",
+        "defaultW": 70, "defaultH": 140, "defaultPaper": "coated_150", "allowedPapers": ["coated_130", "coated_150", "coated_200"],
+        "defaultColor": "4+4", "defaultPerforation": true, "minQty": 100, "priceFrom": "14,00"
+    },
+    {
+        "id": "ticket-numbered", "name": "Вхідний квиток з контролем (50×150)", "category": "advertising", "icon": "🎟️",
+        "desc": "Квиток для концертів, клубів та конференцій з відривним полем перевірки.",
+        "defaultW": 50, "defaultH": 150, "defaultPaper": "coated_150", "allowedPapers": ["coated_150", "coated_200"],
+        "defaultColor": "4+0", "defaultPerforation": true, "minQty": 100, "priceFrom": "13,00"
+    },
+    {
+        "id": "doorhanger-hotel", "name": "Дорхенгер на дверну ручку", "category": "advertising", "icon": "🚪",
+        "desc": "Підвіс 90×200 мм з круглим гачком для готелів, ЖК та адресної доставки.",
+        "defaultW": 90, "defaultH": 200, "defaultPaper": "coated_300", "allowedPapers": ["coated_300", "coated_350"],
+        "defaultColor": "4+4", "defaultPlotter": true, "minQty": 100, "priceFrom": "16,00"
+    },
+    {
+        "id": "neckhanger-bottle", "name": "Некхенгер на шийку пляшки (60×140)", "category": "advertising", "icon": "🍾",
+        "desc": "Підвісна картка з отвором 35 мм для вин, оливкової олії та преміум напоїв.",
+        "defaultW": 60, "defaultH": 140, "defaultPaper": "coated_300", "allowedPapers": ["coated_300", "coated_350"],
+        "defaultColor": "4+0", "defaultPlotter": true, "minQty": 100, "priceFrom": "13,00"
+    },
+    {
+        "id": "wobbler-promo", "name": "Воблер рекламний (100×100)", "category": "advertising", "icon": "🎯",
+        "desc": "Реклама на гнучкій ніжці, що тремтить від повітря біля товару на полиці.",
+        "defaultW": 100, "defaultH": 100, "defaultPaper": "coated_300", "allowedPapers": ["coated_300", "coated_350"],
+        "defaultColor": "4+0", "defaultPlotter": true, "minQty": 50, "priceFrom": "24,00"
+    },
+    {
+        "id": "shelftalker", "name": "Шелфтокер вітринний (200×60)", "category": "advertising", "icon": "📐",
+        "desc": "Поличковий рекламний бортик з біговкою під край торгового стелажу.",
+        "defaultW": 200, "defaultH": 60, "defaultPaper": "coated_300", "allowedPapers": ["coated_250", "coated_300"],
+        "defaultColor": "4+0", "defaultScoring": true, "minQty": 50, "priceFrom": "24,00"
+    },
+    {
+        "id": "table-tent-a5", "name": "Тейбл-тент тригранний (будиночок)", "category": "advertising", "icon": "⛺",
+        "desc": "Настільна табличка 100×210 мм з 3 біговками для стійок адміністратора та барів.",
+        "defaultW": 210, "defaultH": 297, "defaultPaper": "coated_300", "allowedPapers": ["coated_300", "coated_350"],
+        "defaultColor": "4+0", "defaultScoring": true, "minQty": 25, "priceFrom": "51,00"
+    },
+
+    {
+        "id": "sticker-a6", "name": "Наклейка прямокутна А6 (105×148)", "category": "stickers", "icon": "🏷️",
+        "desc": "Самоклейка Raflatac з насічками для легкого відділення від підкладки.",
+        "defaultW": 105, "defaultH": 148, "defaultPaper": "selfadhesive_paper", "allowedPapers": ["selfadhesive_paper", "selfadhesive_vinyl"],
+        "defaultColor": "4+0", "minQty": 50, "priceFrom": "14,00"
+    },
+    {
+        "id": "sticker-a7", "name": "Наклейка маркувальна А7 (74×105)", "category": "stickers", "icon": "📦",
+        "desc": "Популярна адресна етикетка для Нової Пошти, пакування та коробок.",
+        "defaultW": 74, "defaultH": 105, "defaultPaper": "selfadhesive_paper", "allowedPapers": ["selfadhesive_paper", "selfadhesive_vinyl"],
+        "defaultColor": "4+0", "minQty": 50, "priceFrom": "12,00"
+    },
+    {
+        "id": "sticker-square-50", "name": "Наклейка квадратна 50×50", "category": "stickers", "icon": "🟨",
+        "desc": "Брендована наклейка на пакувальний папір, крафт-пакети та бокси.",
+        "defaultW": 50, "defaultH": 50, "defaultPaper": "selfadhesive_paper", "allowedPapers": ["selfadhesive_paper", "selfadhesive_vinyl"],
+        "defaultColor": "4+0", "minQty": 100, "priceFrom": "5,90"
+    },
+    {
+        "id": "sticker-round-plotter", "name": "Наклейка кругла з контурною різкою (Ø50)", "category": "stickers", "icon": "🟡",
+        "desc": "Високоточна плотерна порізка до підкладки за круглим вектором будь-якого діаметра.",
+        "defaultW": 50, "defaultH": 50, "defaultPaper": "selfadhesive_vinyl", "allowedPapers": ["selfadhesive_paper", "selfadhesive_vinyl"],
+        "defaultColor": "4+0", "defaultPlotter": true, "minQty": 100, "priceFrom": "12,00"
+    },
+    {
+        "id": "sticker-coffee-cup", "name": "Наклейка на стаканчик для кави (Ø45)", "category": "stickers", "icon": "☕",
+        "desc": "Кругла вологостійка наклейка на одноразові крафтові стакани.",
+        "defaultW": 45, "defaultH": 45, "defaultPaper": "selfadhesive_vinyl", "allowedPapers": ["selfadhesive_paper", "selfadhesive_vinyl"],
+        "defaultColor": "4+0", "defaultPlotter": true, "minQty": 100, "priceFrom": "12,00"
+    },
+    {
+        "id": "stickerpack-a5", "name": "Стікерпак А5 з контурною висічкою", "category": "stickers", "icon": "🎨",
+        "desc": "Аркуш А5 з набором фігурних стікерів на вологостійкій білій вініловій плівці.",
+        "defaultW": 148, "defaultH": 210, "defaultPaper": "selfadhesive_vinyl", "allowedPapers": ["selfadhesive_paper", "selfadhesive_vinyl"],
+        "defaultColor": "4+0", "defaultPlotter": true, "minQty": 25, "priceFrom": "52,00"
+    },
+    {
+        "id": "stickerpack-a4", "name": "Стікерпак А4 великий", "category": "stickers", "icon": "🖼️",
+        "desc": "Повноформатний набір брендових або фанових стікерів з плотерною висічкою.",
+        "defaultW": 210, "defaultH": 297, "defaultPaper": "selfadhesive_vinyl", "allowedPapers": ["selfadhesive_paper", "selfadhesive_vinyl"],
+        "defaultColor": "4+0", "defaultPlotter": true, "minQty": 20, "priceFrom": "72,00"
+    },
+    {
+        "id": "bottle-label-wine", "name": "Етикетка для пляшок вина / соусів (90×120)", "category": "stickers", "icon": "🍾",
+        "desc": "Плівка з підвищеною адгезією, стійка до конденсату та охолодження у воді.",
+        "defaultW": 90, "defaultH": 120, "defaultPaper": "selfadhesive_vinyl", "allowedPapers": ["selfadhesive_paper", "selfadhesive_vinyl"],
+        "defaultColor": "4+0", "minQty": 100, "priceFrom": "9,65"
+    },
+    {
+        "id": "honey-jar-label", "name": "Етикетка крафтова для банок меду (60×80)", "category": "stickers", "icon": "🍯",
+        "desc": "Натуральний паперовий стікер з просічкою для баночок джему та крафтових десертів.",
+        "defaultW": 60, "defaultH": 80, "defaultPaper": "selfadhesive_paper", "allowedPapers": ["selfadhesive_paper", "selfadhesive_vinyl"],
+        "defaultColor": "4+0", "minQty": 100, "priceFrom": "6,50"
+    },
+    {
+        "id": "candle-cosmetic-label", "name": "Етикетка для свічок та косметики (50×70)", "category": "stickers", "icon": "🕯️",
+        "desc": "Термостійка етикетка з матовою або глянцевою плівкою на скляні ємності.",
+        "defaultW": 50, "defaultH": 70, "defaultPaper": "selfadhesive_vinyl", "allowedPapers": ["selfadhesive_paper", "selfadhesive_vinyl"],
+        "defaultColor": "4+0", "minQty": 100, "priceFrom": "6,70"
+    },
+    {
+        "id": "barcode-thermal-label", "name": "Маркувальний стікер зі штрихкодом (40×25)", "category": "stickers", "icon": "🏷️",
+        "desc": "Чіткий контрастний друк 1+0 для сканування сканерами Rozetka, Prom, Amazon.",
+        "defaultW": 40, "defaultH": 25, "defaultPaper": "selfadhesive_paper", "allowedPapers": ["selfadhesive_paper", "selfadhesive_vinyl"],
+        "defaultColor": "1+0", "minQty": 250, "priceFrom": "2,20"
+    },
+    {
+        "id": "warranty-void-seal", "name": "Гарантійна пломба / стікер контролю (40×20)", "category": "stickers", "icon": "🔒",
+        "desc": "Захисний стікер для опечатування електроніки, коробок або пакетів доставки.",
+        "defaultW": 40, "defaultH": 20, "defaultPaper": "selfadhesive_paper", "allowedPapers": ["selfadhesive_paper", "selfadhesive_vinyl"],
+        "defaultColor": "1+0", "minQty": 200, "priceFrom": "2,65"
+    },
+
+    {
+        "id": "poster-a3", "name": "Плакат А3 (297×420)", "category": "posters", "icon": "🖼️",
+        "desc": "Базовий формат нашої цифрової машини: друк 1 до 1 на 170 г/м² з ідеальною насиченістю.",
+        "defaultW": 297, "defaultH": 420, "defaultPaper": "coated_170", "allowedPapers": ["coated_130", "coated_150", "coated_170", "coated_200"],
+        "defaultColor": "4+0", "minQty": 25, "priceFrom": "38,00"
+    },
+    {
+        "id": "poster-a4", "name": "Плакат А4 (210×297)", "category": "posters", "icon": "📑",
+        "desc": "Оптимальний постер для офісних дошок оголошень, вітрин та закладів.",
+        "defaultW": 210, "defaultH": 297, "defaultPaper": "coated_170", "allowedPapers": ["coated_130", "coated_150", "coated_170", "coated_200"],
+        "defaultColor": "4+0", "minQty": 25, "priceFrom": "29,00"
+    },
+    {
+        "id": "afisha-event-a3", "name": "Афіша подій / концертів А3", "category": "posters", "icon": "🎭",
+        "desc": "Яскравий настінний плакат на економічному глянцевому папері 130 г/м².",
+        "defaultW": 297, "defaultH": 420, "defaultPaper": "coated_130", "allowedPapers": ["coated_115", "coated_130", "coated_150"],
+        "defaultColor": "4+0", "minQty": 25, "priceFrom": "37,00"
+    },
+    {
+        "id": "poster-photo-a3-laminated", "name": "Фотопостер А3 преміум з ламінацією", "category": "posters", "icon": "📸",
+        "desc": "Повноколірний фотодрук на 200 г/м² з матовою антивідблисковою ламінацією.",
+        "defaultW": 297, "defaultH": 420, "defaultPaper": "coated_200", "allowedPapers": ["coated_200", "coated_250"],
+        "defaultColor": "4+0", "defaultLam": "matte_10", "minQty": 25, "priceFrom": "67,00"
+    },
+    {
+        "id": "schedule-poster-a4", "name": "Афіша розкладу / графік роботи А4", "category": "posters", "icon": "🕒",
+        "desc": "Інформаційний лист 210×297 мм з ламінацією для вхідних дверей магазинів та клінік.",
+        "defaultW": 210, "defaultH": 297, "defaultPaper": "coated_250", "allowedPapers": ["coated_200", "coated_250"],
+        "defaultColor": "4+0", "defaultLam": "gloss_10", "minQty": 10, "priceFrom": "115,00"
+    },
+    {
+        "id": "educational-chart-a3", "name": "Навчальний плакат / схема А3", "category": "posters", "icon": "🗺️",
+        "desc": "Деталізовані технічні інструкції, карти або навчальні посібники на 170 г/м².",
+        "defaultW": 297, "defaultH": 420, "defaultPaper": "coated_170", "allowedPapers": ["coated_150", "coated_170", "offset_80"],
+        "defaultColor": "4+0", "minQty": 25, "priceFrom": "38,00"
+    },
+
+    {
+        "id": "booklet-1fold-a4", "name": "Буклет 1 згин (А4 -> А5)", "category": "booklets", "icon": "📘",
+        "desc": "Розгортка А4 (297×210 мм), 1 біговка по лінії згину, 4 повноколірні сторінки.",
+        "defaultW": 210, "defaultH": 297, "defaultPaper": "coated_150", "allowedPapers": ["coated_130", "coated_150", "coated_170"],
+        "defaultColor": "4+4", "defaultScoring": true, "minQty": 50, "priceFrom": "35,00"
+    },
+    {
+        "id": "eurobooklet-2fold", "name": "Євробуклет 2 згини (ліфлет)", "category": "booklets", "icon": "📖",
+        "desc": "Аркуш 297×210 мм, 2 паралельні біговки до формату 99×210 мм (гармошка / намотка).",
+        "defaultW": 210, "defaultH": 297, "defaultPaper": "coated_130", "allowedPapers": ["coated_130", "coated_150"],
+        "defaultColor": "4+4", "defaultScoring": true, "minQty": 50, "priceFrom": "35,00"
+    },
+    {
+        "id": "booklet-accordion-3fold", "name": "Буклет-гармошка 3 згини (4 секції)", "category": "booklets", "icon": "📂",
+        "desc": "Довгий інформаційний буклет 396×210 мм, що складається у 4 стулки 99×210 мм.",
+        "defaultW": 210, "defaultH": 396, "defaultPaper": "coated_150", "allowedPapers": ["coated_130", "coated_150"],
+        "defaultColor": "4+4", "defaultScoring": true, "minQty": 50, "priceFrom": "49,00"
+    },
+    {
+        "id": "brochure-a5-staple", "name": "Брошура А5 на 2 скоби (8 стор.)", "category": "booklets", "icon": "📚",
+        "desc": "Компактний каталог або інструкція на 2 металеві скоби, 8 кольорових сторінок.",
+        "defaultW": 148, "defaultH": 210, "defaultPaper": "coated_150", "allowedPapers": ["coated_130", "coated_150"],
+        "defaultColor": "4+4", "defaultStaples": true, "minQty": 25, "pages": 8, "pageStep": 4, "selfCover": true, "priceFrom": "71,00"
+    },
+    {
+        "id": "brochure-a4-staple", "name": "Брошура А4 на 2 скоби (12 стор.)", "category": "booklets", "icon": "📑",
+        "desc": "Презентаційний корпоративний звіт або каталог товарів у повному форматі А4.",
+        "defaultW": 210, "defaultH": 297, "defaultPaper": "coated_150", "allowedPapers": ["coated_150", "coated_170"],
+        "defaultColor": "4+4", "defaultStaples": true, "minQty": 25, "pages": 12, "pageStep": 4, "selfCover": true, "priceFrom": "115,00"
+    },
+    {
+        "id": "catalog-multipage", "name": "Каталог продукції 16 стор. А4", "category": "booklets", "icon": "📕",
+        "desc": "Повноцінний виробничий каталог товарів з цінами та технічними характеристиками.",
+        "defaultW": 210, "defaultH": 297, "defaultPaper": "coated_150", "allowedPapers": ["coated_130", "coated_150"],
+        "defaultColor": "4+4", "defaultStaples": true, "minQty": 25, "pages": 16, "pageStep": 4, "selfCover": true, "priceFrom": "139,00"
+    },
+    {
+        "id": "catalog-a5-spring-40p", "name": "Каталог А5 на металевій пружині (40 стор.)", "category": "booklets", "icon": "📒",
+        "desc": "Зручний гортальний альбом на міцній білій або чорній пружині з обкладинкою 300г.",
+        "defaultW": 148, "defaultH": 210, "defaultPaper": "coated_130", "allowedPapers": ["coated_130", "coated_150"],
+        "defaultColor": "4+4", "defaultSpring": true, "minQty": 10, "pages": 40, "pageStep": 2, "coverPaper": "coated_300", "coverColor": "4+4", "coverLam": "matte_10", "priceFrom": "347,00"
+    },
+    {
+        "id": "user-manual-fold", "name": "Інструкція користувача гармошкою (А4)", "category": "booklets", "icon": "📝",
+        "desc": "Економічна інструкція 1+1 на 80г офсетному папері з машинним фальцюванням.",
+        "defaultW": 210, "defaultH": 297, "defaultPaper": "offset_80", "allowedPapers": ["offset_80", "coated_115"],
+        "defaultColor": "1+1", "defaultScoring": true, "minQty": 100, "priceFrom": "13,00"
+    },
+
+    {
+        "id": "certificate-a4", "name": "Сертифікат А4 (210×297)", "category": "office", "icon": "🏆",
+        "desc": "Офіційний нагородний документ або кваліфікаційний диплом на картоні 300 г/м².",
+        "defaultW": 210, "defaultH": 297, "defaultPaper": "coated_300", "allowedPapers": ["coated_300", "coated_350", "design_300"],
+        "defaultColor": "4+0", "minQty": 25, "priceFrom": "30,00"
+    },
+    {
+        "id": "certificate-a5", "name": "Сертифікат А5 подарунковий", "category": "office", "icon": "🎖️",
+        "desc": "Формат 148×210 мм для студій краси, фітнес-клубів, СПА та ювелірних салонів.",
+        "defaultW": 148, "defaultH": 210, "defaultPaper": "coated_300", "allowedPapers": ["coated_300", "coated_350", "design_300"],
+        "defaultColor": "4+4", "minQty": 25, "priceFrom": "30,00"
+    },
+    {
+        "id": "diploma-a4", "name": "Диплом / Грамота А4", "category": "office", "icon": "📜",
+        "desc": "Нагородний лист учасникам конкурсів, олімпіад та спортивних змагань.",
+        "defaultW": 210, "defaultH": 297, "defaultPaper": "coated_350", "allowedPapers": ["coated_300", "coated_350", "design_300"],
+        "defaultColor": "4+0", "minQty": 25, "priceFrom": "31,00"
+    },
+    {
+        "id": "presentation-spring", "name": "Презентація на пружину А4", "category": "office", "icon": "📊",
+        "desc": "Зшивка на металеву пружину з прозорою пластиковою обкладинкою та цупким зворотом.",
+        "defaultW": 210, "defaultH": 297, "defaultPaper": "coated_170", "allowedPapers": ["coated_150", "coated_170", "offset_80"],
+        "defaultColor": "4+0", "defaultSpring": true, "minQty": 10, "pages": 20, "pageStep": 2, "coverPaper": "coated_300", "coverColor": "4+0", "coverLam": "matte_10", "priceFrom": "362,00"
+    },
+    {
+        "id": "notebook-spring-a5", "name": "Блокнот на пружині А5 (50 арк.)", "category": "office", "icon": "📓",
+        "desc": "Брендована обкладинка 300 г/м² + внутрішній блок 50 аркушів у клітинку/лінію на пружині.",
+        "defaultW": 148, "defaultH": 210, "defaultPaper": "coated_300", "allowedPapers": ["coated_300"],
+        "defaultColor": "4+0", "defaultSpring": true, "minQty": 25, "pages": 100, "pageStep": 2, "coverPaper": "coated_300", "coverColor": "4+0", "coverLam": "matte_10", "priceFrom": "155,00"
+    },
+    {
+        "id": "notebook-spring-a6", "name": "Блокнот кишеньковий А6 на пружині", "category": "office", "icon": "📔",
+        "desc": "Компактний нотатник для конференцій та тренінгів зі зручною верхньою спіраллю.",
+        "defaultW": 105, "defaultH": 148, "defaultPaper": "coated_300", "allowedPapers": ["coated_300"],
+        "defaultColor": "4+0", "defaultSpring": true, "minQty": 25, "pages": 80, "pageStep": 2, "coverPaper": "coated_300", "coverColor": "4+0", "priceFrom": "99,00"
+    },
+    {
+        "id": "memo-cube-pad", "name": "Кубарик для записів (90×90)", "category": "office", "icon": "🧊",
+        "desc": "Блок із 100 аркушів 80г офсету з проклеюванням по одному торцю для швидких заміток.",
+        "defaultW": 90, "defaultH": 90, "defaultPaper": "offset_80", "allowedPapers": ["offset_80"],
+        "defaultColor": "4+0", "minQty": 25, "pages": 100, "pageStep": 25, "selfCover": true, "priceFrom": "119,00"
+    },
+    {
+        "id": "letterhead-a4", "name": "Бланк фірмовий А4", "category": "office", "icon": "📄",
+        "desc": "Корпоративний бланк для наказів, комерційних пропозицій та листів на 80г офсеті.",
+        "defaultW": 210, "defaultH": 297, "defaultPaper": "offset_80", "allowedPapers": ["offset_80"],
+        "defaultColor": "4+0", "minQty": 100, "priceFrom": "13,00"
+    },
+    {
+        "id": "envelope-c65", "name": "Конверт фірмовий Євро С65 (110×220)", "category": "office", "icon": "✉️",
+        "desc": "Друк логотипу та контактів на поштових конвертах під складений лист А4 утричі.",
+        "defaultW": 110, "defaultH": 220, "defaultPaper": "offset_80", "allowedPapers": ["offset_80"],
+        "defaultColor": "4+0", "minQty": 50, "priceFrom": "15,00"
+    },
+    {
+        "id": "badge-conference", "name": "Бейдж для конференцій (85×120)", "category": "office", "icon": "🪪",
+        "desc": "Персоналізована картка з матовою ламінацією та овальним отвором під карабін ланцюжка.",
+        "defaultW": 85, "defaultH": 120, "defaultPaper": "coated_300", "allowedPapers": ["coated_300", "coated_350"],
+        "defaultColor": "4+4", "defaultLam": "matte_11", "defaultHole": true, "minQty": 50, "priceFrom": "39,00"
+    },
+    {
+        "id": "corporate-folder-a4", "name": "Папка фірмова висічна під А4", "category": "office", "icon": "📁",
+        "desc": "Картонна папка 350 г/м² з кишенею для документів та прорізами під візитку.",
+        "defaultW": 297, "defaultH": 420, "defaultPaper": "coated_350", "allowedPapers": ["coated_350"],
+        "defaultColor": "4+0", "defaultLam": "matte_10", "defaultPlotter": true, "minQty": 25, "priceFrom": "90,00"
+    },
+
+    {
+        "id": "menu-a4-laminated", "name": "Меню для ресторану А4 (ламіноване)", "category": "office", "icon": "🍽️",
+        "desc": "Повноколірне меню з щільною двосторонньою матовою ламінацією 30 мкм проти плям та вологи.",
+        "defaultW": 210, "defaultH": 297, "defaultPaper": "coated_300", "allowedPapers": ["coated_250", "coated_300", "coated_350"],
+        "defaultColor": "4+4", "defaultLam": "matte_11", "minQty": 10, "priceFrom": "126,00"
+    },
+    {
+        "id": "menu-placemat-a3", "name": "Плейсмет столовий (сет на стіл А3)", "category": "office", "icon": "🍕",
+        "desc": "Одноразова паперова підкладка під тарілки 297×420 мм на еко-крафті або офсеті.",
+        "defaultW": 297, "defaultH": 420, "defaultPaper": "kraft_200", "allowedPapers": ["offset_80", "kraft_200"],
+        "defaultColor": "1+0", "minQty": 100, "priceFrom": "12,00"
+    },
+    {
+        "id": "menu-booklet-fold", "name": "Меню-буклет зі згином (А3 -> А4)", "category": "office", "icon": "📋",
+        "desc": "Аркуш А3 з біговкою по центру складається у 4 смуги формату А4 з ламінацією.",
+        "defaultW": 297, "defaultH": 420, "defaultPaper": "coated_300", "allowedPapers": ["coated_250", "coated_300"],
+        "defaultColor": "4+4", "defaultScoring": true, "minQty": 10, "priceFrom": "138,00"
+    },
+    {
+        "id": "wine-list-narrow", "name": "Винна / барна карта вузька (105×297)", "category": "office", "icon": "🍷",
+        "desc": "Витягнутий елегантний вертикальний лист на 350г картоні з матовою ламінацією.",
+        "defaultW": 105, "defaultH": 297, "defaultPaper": "coated_350", "allowedPapers": ["coated_300", "coated_350"],
+        "defaultColor": "4+4", "defaultLam": "matte_11", "minQty": 10, "priceFrom": "127,00"
+    },
+    {
+        "id": "coaster-beermat", "name": "Костер / бірдекель під келих (90×90)", "category": "office", "icon": "🍺",
+        "desc": "Квадратний або круглий підсклянник 90×90 мм на поглинаючому картонному матеріалі.",
+        "defaultW": 90, "defaultH": 90, "defaultPaper": "coated_350", "allowedPapers": ["coated_350", "kraft_200"],
+        "defaultColor": "4+4", "defaultCorners": true, "minQty": 100, "priceFrom": "14,00"
+    },
+
+    {
+        "id": "postcard-a6", "name": "Листівка поштова А6 (105×148)", "category": "gifts", "icon": "✉️",
+        "desc": "Класична поштівка з авторською ілюстрацією на цупкому картоні 300 г/м².",
+        "defaultW": 105, "defaultH": 148, "defaultPaper": "coated_300", "allowedPapers": ["coated_250", "coated_300", "coated_350", "design_300"],
+        "defaultColor": "4+4", "minQty": 50, "priceFrom": "15,00"
+    },
+    {
+        "id": "postcard-a5", "name": "Листівка А5 велика (148×210)", "category": "gifts", "icon": "💌",
+        "desc": "Велике вітальне фото-повідомлення до дня народження або професійного свята.",
+        "defaultW": 148, "defaultH": 210, "defaultPaper": "coated_300", "allowedPapers": ["coated_250", "coated_300", "coated_350"],
+        "defaultColor": "4+4", "minQty": 50, "priceFrom": "18,00"
+    },
+    {
+        "id": "postcard-folded", "name": "Листівка подвійна з біговкою (210×198)", "category": "gifts", "icon": "📖",
+        "desc": "Складається навпіл до євро-формату 99×210 мм, зручно вкладається у конверт.",
+        "defaultW": 198, "defaultH": 210, "defaultPaper": "coated_300", "allowedPapers": ["coated_250", "coated_300"],
+        "defaultColor": "4+4", "defaultScoring": true, "minQty": 50, "priceFrom": "36,00"
+    },
+    {
+        "id": "postcard-square", "name": "Листівка квадратна (140×140)", "category": "gifts", "icon": "🔲",
+        "desc": "Стильний Instagram-формат для привітань, весільних запрошень та шоурумів.",
+        "defaultW": 140, "defaultH": 140, "defaultPaper": "coated_350", "allowedPapers": ["coated_300", "coated_350", "design_300"],
+        "defaultColor": "4+4", "minQty": 50, "priceFrom": "18,00"
+    },
+    {
+        "id": "postcard-pearl-majestic", "name": "Листівка з перламутровим блиском Majestic", "category": "gifts", "icon": "✨",
+        "desc": "Мерехтливий італійський дизайнерський картон з шовковистим переливом під світлом.",
+        "defaultW": 105, "defaultH": 148, "defaultPaper": "design_300", "allowedPapers": ["design_300"],
+        "defaultColor": "4+4", "minQty": 25, "priceFrom": "28,00"
+    },
+    {
+        "id": "invitation-wedding", "name": "Запрошення на весілля / подію (100×200)", "category": "gifts", "icon": "💒",
+        "desc": "Розмір 100×200 мм на дизайнерському папері або з Soft-Touch покриттям.",
+        "defaultW": 100, "defaultH": 200, "defaultPaper": "design_300", "allowedPapers": ["coated_300", "coated_350", "design_300"],
+        "defaultColor": "4+4", "minQty": 25, "priceFrom": "34,00"
+    },
+    {
+        "id": "calendar-pocket", "name": "Календар кишеньковий (70×100)", "category": "gifts", "icon": "📅",
+        "desc": "Двостороння ламінація, скруглені 4 кути — надійний рекламний носій на весь рік.",
+        "defaultW": 70, "defaultH": 100, "defaultPaper": "coated_350", "allowedPapers": ["coated_350"],
+        "defaultColor": "4+4", "defaultLam": "gloss_11", "defaultCorners": true, "minQty": 100, "priceFrom": "19,00"
+    },
+    {
+        "id": "calendar-tent", "name": "Календар-будиночок настільний (210×100)", "category": "gifts", "icon": "🗓️",
+        "desc": "Стійка трикутна конструкція з 3 біговками, що прикрашає робочий стіл клієнта 365 днів.",
+        "defaultW": 210, "defaultH": 297, "defaultPaper": "coated_300", "allowedPapers": ["coated_300", "coated_350"],
+        "defaultColor": "4+0", "defaultScoring": true, "minQty": 25, "priceFrom": "51,00"
+    },
+    {
+        "id": "calendar-wall-a4", "name": "Календар перекидний настінний А4", "category": "gifts", "icon": "📆",
+        "desc": "13 перекидних аркушів, пружина по короткій стороні з ригелем (гачком для цвяха).",
+        "defaultW": 210, "defaultH": 297, "defaultPaper": "coated_170", "allowedPapers": ["coated_150", "coated_170", "coated_200"],
+        "defaultColor": "4+0", "defaultSpring": true, "minQty": 10, "pages": 13, "pageStep": 1, "coverPaper": "coated_200", "coverColor": "4+0", "priceFrom": "260,00"
+    },
+    {
+        "id": "desk-planning-mat-a3", "name": "Настільний планінг А3 (відривний блок)", "category": "gifts", "icon": "🗓️",
+        "desc": "Блок із 52 аркушів 80г офсету з сіткою днів тижня та проклеюванням нижнього краю.",
+        "defaultW": 297, "defaultH": 420, "defaultPaper": "offset_80", "allowedPapers": ["offset_80"],
+        "defaultColor": "4+0", "minQty": 10, "pages": 52, "pageStep": 1, "selfCover": true, "priceFrom": "476,00"
+    },
+    {
+        "id": "bookmark-with-eyelet", "name": "Закладка для книг з отвором (50×180)", "category": "gifts", "icon": "🔖",
+        "desc": "Цупка закладка 350 г/м² з матовою ламінацією та отвором під атласну стрічку.",
+        "defaultW": 50, "defaultH": 180, "defaultPaper": "coated_350", "allowedPapers": ["coated_350", "design_300"],
+        "defaultColor": "4+4", "defaultLam": "matte_11", "defaultHole": true, "minQty": 50, "priceFrom": "38,00"
+    },
+
+  {
+    "id": "event-ticket-perforated",
+    "name": "Квиток події з перфорацією (90×180)",
+    "category": "polygraphy",
+    "icon": "🎟️",
+    "desc": "Квиток на концерт або захід з перфорованою лінією відриву корінця на щільному папері 150 г/м².",
+    "defaultW": 90,
+    "defaultH": 180,
+    "defaultPaper": "coated_150",
+    "allowedPapers": [
+      "coated_150",
+      "coated_170"
+    ],
+    "defaultColor": "4+0",
+    "defaultPerforation": true,
+    "minQty": 100,
+    "priceFrom": "13,00"
+  },
+  {
+    "id": "postcard-a6-double",
+    "name": "Листівка A6 двостороння",
+    "category": "polygraphy",
+    "icon": "💌",
+    "desc": "Вітальна листівка 105×148 мм з повноколірним друком з обох боків на картоні 170 г/м².",
+    "defaultW": 105,
+    "defaultH": 148,
+    "defaultPaper": "coated_170",
+    "allowedPapers": [
+      "coated_170",
+      "coated_200",
+      "coated_250"
+    ],
+    "defaultColor": "4+4",
+    "minQty": 50,
+    "priceFrom": "15,00"
+  },
+  {
+    "id": "postcard-a5-tear-off",
+    "name": "Листівка A5 з відривним корінцем",
+    "category": "polygraphy",
+    "icon": "🎫",
+    "desc": "Листівка з перфорацією під талон: залишок — частина клієнта, корінець — для конкурсу або знижки.",
+    "defaultW": 148,
+    "defaultH": 210,
+    "defaultPaper": "coated_150",
+    "allowedPapers": [
+      "coated_150",
+      "coated_170"
+    ],
+    "defaultColor": "4+0",
+    "defaultPerforation": true,
+    "minQty": 50,
+    "priceFrom": "25,00"
+  },
+  {
+    "id": "invitation-vertical",
+    "name": "Запрошення вертикальне (100×210)",
+    "category": "polygraphy",
+    "icon": "🕯️",
+    "desc": "Струнке запрошення на дизайнерському картоні з біговкою по лінії згину — весілля та події.",
+    "defaultW": 100,
+    "defaultH": 210,
+    "defaultPaper": "design_300",
+    "allowedPapers": [
+      "design_300",
+      "coated_300",
+      "coated_350"
+    ],
+    "defaultColor": "4+0",
+    "defaultScoring": true,
+    "minQty": 50,
+    "priceFrom": "29,00"
+  },
+  {
+    "id": "flyer-a4-promo",
+    "name": "Флаєр А4 промо",
+    "category": "advertising",
+    "icon": "📢",
+    "desc": "Максимум інформації на аркуші А4: акції, прайс-листи, розклади. 130 г/м², колір 4+0.",
+    "defaultW": 210,
+    "defaultH": 297,
+    "defaultPaper": "coated_130",
+    "allowedPapers": [
+      "coated_130",
+      "coated_115",
+      "offset_80",
+      "coated_150"
+    ],
+    "defaultColor": "4+0",
+    "minQty": 100,
+    "priceFrom": "13,00"
+  },
+  {
+    "id": "wall-chart-a3-lam",
+    "name": "Стінець-графік А3 ламінований",
+    "category": "office",
+    "icon": "📊",
+    "desc": "Настінний графік роботи чи планування А3 у матовій ламінації — пишіть маркером та стирайте.",
+    "defaultW": 297,
+    "defaultH": 420,
+    "defaultPaper": "coated_200",
+    "allowedPapers": [
+      "coated_200",
+      "coated_250"
+    ],
+    "defaultColor": "4+0",
+    "defaultLam": "matte_10",
+    "minQty": 10,
+    "priceFrom": "130,00"
+  },
+  {
+    "id": "table-tent",
+    "name": "Тейбл-тент картка на стіл",
+    "category": "advertising",
+    "icon": "🔺",
+    "desc": "Двостороння картка 100×200 мм з біговкою — складається у трикутну наметку на столик.",
+    "defaultW": 100,
+    "defaultH": 200,
+    "defaultPaper": "coated_250",
+    "allowedPapers": [
+      "coated_250",
+      "coated_300"
+    ],
+    "defaultColor": "4+4",
+    "defaultScoring": true,
+    "defaultFolding": true,
+    "minQty": 50,
+    "priceFrom": "39,00"
+  },
+  {
+    "id": "price-card-a6",
+    "name": "Цінник на полицю А6",
+    "category": "advertising",
+    "icon": "🏷️",
+    "desc": "Тег А6 105×148 мм на картоні 200 г/м² для торгових полиць та виставкових стендів.",
+    "defaultW": 105,
+    "defaultH": 148,
+    "defaultPaper": "coated_200",
+    "allowedPapers": [
+      "coated_200",
+      "coated_250"
+    ],
+    "defaultColor": "4+0",
+    "minQty": 100,
+    "priceFrom": "7,40"
+  },
+  {
+    "id": "sticker-sheet-a5",
+    "name": "Аркуш наліпок А5 (самоклейка)",
+    "category": "stickers",
+    "icon": "🗒️",
+    "desc": "Аркуш А5 з вашим набором наліпок: висічка по контуру або легкий відрив без залишку клею.",
+    "defaultW": 148,
+    "defaultH": 210,
+    "defaultPaper": "selfadhesive_paper",
+    "allowedPapers": [
+      "selfadhesive_paper",
+      "selfadhesive_vinyl"
+    ],
+    "defaultColor": "4+0",
+    "minQty": 50,
+    "priceFrom": "17,00"
+  },
+  {
+    "id": "label-100x150",
+    "name": "Етикетка на тару (100×150)",
+    "category": "stickers",
+    "icon": "🧴",
+    "desc": "Прямокутна етикетка на банку, бутель або коробку. Самоклеючий папір Raflatac, друк 4+0.",
+    "defaultW": 100,
+    "defaultH": 150,
+    "defaultPaper": "selfadhesive_paper",
+    "allowedPapers": [
+      "selfadhesive_paper"
+    ],
+    "defaultColor": "4+0",
+    "minQty": 100,
+    "priceFrom": "12,00"
+  },
+  {
+    "id": "vinyl-sticker-a5",
+    "name": "Вінілова наліпка А5",
+    "category": "stickers",
+    "icon": "🛞",
+    "desc": "Стійка до дощу та UV плівка: вивіски на авто, вітрини, обладнання. Друк 4+0 на вінілі.",
+    "defaultW": 148,
+    "defaultH": 210,
+    "defaultPaper": "selfadhesive_vinyl",
+    "allowedPapers": [
+      "selfadhesive_vinyl"
+    ],
+    "defaultColor": "4+0",
+    "minQty": 20,
+    "priceFrom": "36,00"
+  },
+  {
+    "id": "poster-a3-photo",
+    "name": "Постер А3 на крейдованому 200 г",
+    "category": "posters",
+    "icon": "🖼️",
+    "desc": "Повноколірний постер А3 297×420 мм — яскраві кольори для афіш, репродукцій та промо.",
+    "defaultW": 297,
+    "defaultH": 420,
+    "defaultPaper": "coated_200",
+    "allowedPapers": [
+      "coated_200",
+      "coated_150",
+      "coated_250"
+    ],
+    "defaultColor": "4+0",
+    "minQty": 10,
+    "priceFrom": "72,00"
+  },
+  {
+    "id": "poster-a3-matte-lam",
+    "name": "Постер А3 з матовою ламінацією",
+    "category": "posters",
+    "icon": "🌃",
+    "desc": "Постер А3 у матовій ламінації 1+0: без бліків, захист від вицвітання та подряпин.",
+    "defaultW": 297,
+    "defaultH": 420,
+    "defaultPaper": "coated_200",
+    "allowedPapers": [
+      "coated_200",
+      "coated_250"
+    ],
+    "defaultColor": "4+0",
+    "defaultLam": "matte_10",
+    "minQty": 10,
+    "priceFrom": "130,00"
+  },
+  {
+    "id": "info-tablet-a5",
+    "name": "Інформаційна табличка А5",
+    "category": "posters",
+    "icon": "ℹ️",
+    "desc": "Табличка А5 з ламінацією — для приміщень, офісів та ОСББ: графік роботи, правила, вказівники.",
+    "defaultW": 148,
+    "defaultH": 210,
+    "defaultPaper": "coated_250",
+    "allowedPapers": [
+      "coated_250",
+      "coated_300"
+    ],
+    "defaultColor": "4+0",
+    "defaultLam": "matte_10",
+    "minQty": 10,
+    "priceFrom": "109,00"
+  },
+  {
+    "id": "booklet-euro-classic",
+    "name": "Буклет євро А4 2 фальці",
+    "category": "booklets",
+    "icon": "📨",
+    "desc": "Класичний євробуклет: розгортка А4 з двома фальцями на 6 смуг. Папір 130 г/м², друк 4+0.",
+    "defaultW": 210,
+    "defaultH": 297,
+    "defaultPaper": "coated_130",
+    "allowedPapers": [
+      "coated_130",
+      "coated_115",
+      "coated_150"
+    ],
+    "defaultColor": "4+0",
+    "defaultFolding": true,
+    "minQty": 100,
+    "priceFrom": "19,00"
+  },
+  {
+    "id": "booklet-window-a4",
+    "name": "Буклет вікно А4 2 фальці",
+    "category": "booklets",
+    "icon": "🪟",
+    "desc": "Розгортка А4 з віконним згином: внутрішній клапан з'являється при розкритті. Друк 4+4.",
+    "defaultW": 210,
+    "defaultH": 297,
+    "defaultPaper": "coated_150",
+    "allowedPapers": [
+      "coated_150",
+      "coated_170"
+    ],
+    "defaultColor": "4+4",
+    "defaultFolding": true,
+    "minQty": 100,
+    "priceFrom": "25,00"
+  },
+  {
+    "id": "catalog-a5-staples",
+    "name": "Каталог продукції А5 на скобах",
+    "category": "booklets",
+    "icon": "📘",
+    "desc": "Компактний каталог А5 зі скріпленням на скобу — прайси та колекції для менеджерів і точок продажу.",
+    "defaultW": 148,
+    "defaultH": 210,
+    "defaultPaper": "coated_130",
+    "allowedPapers": [
+      "coated_130",
+      "coated_150"
+    ],
+    "defaultColor": "4+4",
+    "defaultStaples": true,
+    "minQty": 100,
+    "pages": 16, "pageStep": 4, "selfCover": true, "priceFrom": "52,00"
+  },
+  {
+    "id": "letterhead-form",
+    "name": "Бланк організації А4",
+    "category": "office",
+    "icon": "📄",
+    "desc": "Фірмовий бланк з реквізитами та логотипом на офсеті 80 г/м², друк 1+0. Тиражі від 100.",
+    "defaultW": 210,
+    "defaultH": 297,
+    "defaultPaper": "offset_80",
+    "allowedPapers": [
+      "offset_80"
+    ],
+    "defaultColor": "1+0",
+    "minQty": 100,
+    "priceFrom": "6,80"
+  },
+  {
+    "id": "conference-folder",
+    "name": "Конференц-папка з клапанами",
+    "category": "office",
+    "icon": "🗂️",
+    "desc": "Папка А4 з бігованим внутрішнім клапаном для документів — семінари, презентації, тренінги.",
+    "defaultW": 230,
+    "defaultH": 320,
+    "defaultPaper": "coated_250",
+    "allowedPapers": [
+      "coated_250",
+      "coated_300"
+    ],
+    "defaultColor": "4+0",
+    "defaultScoring": true,
+    "minQty": 50,
+    "priceFrom": "40,00"
+  },
+  {
+    "id": "notebook-a6-spring",
+    "name": "Блокнот А6 на пружині",
+    "category": "office",
+    "icon": "📔",
+    "desc": "Корпоративний блокнот А6: щільна обкладинка 250 г/м², металева пружина зверху.",
+    "defaultW": 105,
+    "defaultH": 148,
+    "defaultPaper": "coated_250",
+    "allowedPapers": [
+      "coated_250",
+      "coated_300"
+    ],
+    "defaultColor": "4+4",
+    "defaultSpring": true,
+    "minQty": 25,
+    "pages": 96, "pageStep": 2, "coverPaper": "coated_250", "coverColor": "4+4", "priceFrom": "107,00"
+  },
+  {
+    "id": "calendar-desk-house",
+    "name": "Календар-будиночок настільний",
+    "category": "gifts",
+    "icon": "🏠",
+    "desc": "Настільний календар 100×190 мм з біговками та пружиною-триногою — 12 рекламних смуг.",
+    "defaultW": 100,
+    "defaultH": 190,
+    "defaultPaper": "coated_250",
+    "allowedPapers": [
+      "coated_250",
+      "coated_300"
+    ],
+    "defaultColor": "4+4",
+    "defaultScoring": true,
+    "defaultSpring": true,
+    "minQty": 25,
+    "priceFrom": "103,00"
+  },
+
+  // ===== МЕРЧ З ЛОГОТИПОМ (друк на готових виробах) =====
+  { "id": "merch-tshirt", "name": "Футболка з логотипом", "category": "merch", "icon": "👕", "kind": "merch", "unitPrice": 30, "applyMethod": "DTF-принт",
+    "desc": "Бавовняна футболка 190 г/м² з принтом логотипа (DTF — стійке до прань). Розміри S–3XL, кольори на вибір.",
+    "defaultW": 200, "defaultH": 280, "defaultPaper": "coated_130", "allowedPapers": [], "defaultColor": "4+0", "minQty": 10, "priceFrom": "30,00" },
+  { "id": "merch-raglan", "name": "Реглан (лонгслів) з логотипом", "category": "merch", "icon": "🎽", "kind": "merch", "unitPrice": 990, "applyMethod": "DTF-принт",
+    "desc": "Реглан з довгим рукавом, щільний трикотаж 240 г/м², контрастні рукави. Принт логотипа на грудях/спині.",
+    "defaultW": 200, "defaultH": 280, "defaultPaper": "coated_130", "allowedPapers": [], "defaultColor": "4+0", "minQty": 5, "priceFrom": "990,00" },
+  { "id": "merch-hoodie", "name": "Худі з логотипом", "category": "merch", "icon": "🧥", "kind": "merch", "unitPrice": 1500, "applyMethod": "DTF + вишивка",
+    "desc": "Худі з капюшоном, фліс 320 г/м², куліс для шнурів. Логотип: DTF-принт або вишивка (до 10 000 стібків).",
+    "defaultW": 200, "defaultH": 280, "defaultPaper": "coated_130", "allowedPapers": [], "defaultColor": "4+0", "minQty": 5, "priceFrom": "1 500,00" },
+  { "id": "merch-vest", "name": "Жилетка з логотипом", "category": "merch", "icon": "🦺", "kind": "merch", "unitPrice": 1950, "applyMethod": "DTF + вишивка",
+    "desc": "Фірмова жилетка (робоча/корпоративна), меш 280 г/м². Логотип на грудях та спині, індивідуальні розміри.",
+    "defaultW": 200, "defaultH": 280, "defaultPaper": "coated_130", "allowedPapers": [], "defaultColor": "4+0", "minQty": 5, "priceFrom": "1 950,00" },
+  { "id": "merch-backpack", "name": "Рюкзак з логотипом", "category": "merch", "icon": "🎒", "kind": "merch", "unitPrice": 500, "applyMethod": "Шовкографія",
+    "desc": "Міський рюкзак 18 л, поліестер 600D, відділ для ноутбука 15\". Логотип шовкографією до 2 кольорів.",
+    "defaultW": 200, "defaultH": 280, "defaultPaper": "coated_130", "allowedPapers": [], "defaultColor": "4+0", "minQty": 5, "priceFrom": "500,00" },
+
+  // ===== ГОТОВІ ПАКУНКИ (фіксована ціна комплекту, препресс включений) =====
+  { "id": "pack-start", "name": "Пакунок «СТАРТ» — запуск бізнесу", "category": "packages", "icon": "🚀", "kind": "package", "pkgPrice": 4140, "items": [{ "id": "business-card-standard", "qty": 100 }, { "id": "flyer-a6", "qty": 500 }, { "id": "calendar-desk-house", "qty": 25 }],
+    "contents": ["Візитка стандарт (90×50) — 100 шт", "Флаєр А6 (105×148) — 500 шт", "Календар-будиночок настільний — 25 шт"],
+    "desc": "Все для запуску: візитки для партнерів, флаєри для поштових скриньок і календарі, що працюють на клієнта рік.",
+    "defaultW": 90, "defaultH": 50, "defaultPaper": "coated_350", "allowedPapers": [], "defaultColor": "4+0", "minQty": 1, "priceFrom": "4 140,00" },
+  { "id": "pack-promo", "name": "Пакунок «ПРОМО-АТАКА»", "category": "packages", "icon": "📣", "kind": "package", "pkgPrice": 11621, "items": [{ "id": "flyer-a5", "qty": 1000 }, { "id": "eurobooklet-2fold", "qty": 500 }, { "id": "sticker-a6", "qty": 200 }],
+    "contents": ["Флаєр А5 (148×210) — 1000 шт", "Буклет євро (2 фальці) — 500 шт", "Нахлейка А6 (105×148) — 200 шт"],
+    "desc": "Масова рекламна кампанія: роздача флаєрів, буклети на стойки та стікери на пакети/вітрини.",
+    "defaultW": 148, "defaultH": 210, "defaultPaper": "coated_130", "allowedPapers": [], "defaultColor": "4+4", "minQty": 1, "priceFrom": "11 621,00" },
+  { "id": "pack-conference", "name": "Пакунок «КОНФЕРЕНЦІЯ»", "category": "packages", "icon": "🎤", "kind": "package", "pkgPrice": 16030, "items": [{ "id": "badge-conference", "qty": 50 }, { "id": "presentation-spring", "qty": 50 }, { "id": "notebook-spring-a5", "qty": 25 }, { "id": "conference-folder", "qty": 50 }],
+    "contents": ["Бейдж конференційний — 50 шт", "Презентація на пружині (20 стор.) — 50 шт", "Блокнот А5 на пружині — 25 шт", "Конференц-папка з клапанами — 50 шт"],
+    "desc": "Повний комплект для заходу на 50 учасників: бейджі, програми, блокноти та фірмові папки.",
+    "defaultW": 90, "defaultH": 120, "defaultPaper": "coated_250", "allowedPapers": [], "defaultColor": "4+0", "minQty": 1, "priceFrom": "16 030,00" },
+  { "id": "pack-horeca", "name": "Пакунок «HORECA» — ресторану", "category": "packages", "icon": "🍽️", "kind": "package", "pkgPrice": 5526, "items": [{ "id": "menu-a4-laminated", "qty": 20 }, { "id": "table-tent", "qty": 50 }, { "id": "coaster-beermat", "qty": 100 }, { "id": "wine-list-narrow", "qty": 10 }],
+    "contents": ["Меню А4 з ламінацією — 20 шт", "Тейбл-тент — 50 шт", "Підставка під кухоль (біермат) — 100 шт", "Винна карта (вузька) — 10 шт"],
+    "desc": "Комплект для кафе/ресторану: стійкі до вологи меню, тейбл-тенти на столи та підставки.",
+    "defaultW": 210, "defaultH": 297, "defaultPaper": "coated_300", "allowedPapers": [], "defaultColor": "4+4", "minQty": 1, "priceFrom": "5 526,00" },
+  { "id": "pack-merch", "name": "Пакунок «МЕРЧ-СТАРТ» — команда", "category": "packages", "icon": "👔", "kind": "package", "pkgPrice": 15525, "items": [{ "id": "merch-tshirt", "qty": 10 }, { "id": "merch-raglan", "qty": 5 }, { "id": "merch-hoodie", "qty": 5 }, { "id": "merch-backpack", "qty": 5 }],
+    "contents": ["Футболка з логотипом — 10 шт", "Реглан з логотипом — 5 шт", "Худі з логотипом — 5 шт", "Рюкзак з логотипом — 5 шт"],
+    "desc": "Одяг для команди: футболки для промо-персоналу, реглани та худі для колективу, рюкзаки — як подарунок клієнтам.",
+    "defaultW": 200, "defaultH": 280, "defaultPaper": "coated_130", "allowedPapers": [], "defaultColor": "4+0", "minQty": 1, "priceFrom": "15 525,00" },
+  { "id": "pack-retail", "name": "Пакунок «РОЗДРІБ» — магазин", "category": "packages", "icon": "🛒", "kind": "package", "pkgPrice": 6283, "items": [{ "id": "tag-clothing", "qty": 500 }, { "id": "price-tag-retail", "qty": 500 }, { "id": "stickerpack-a5", "qty": 100 }, { "id": "postcard-a6", "qty": 100 }],
+    "contents": ["Бірка для одягу — 500 шт", "Цінник роздрібний — 500 шт", "Стікерпак А5 — 100 шт", "Листівка А6 — 100 шт"],
+    "desc": "Оформлення точки продажу: бірки та цінники на товар, стікери на пакети і листівки в замовлення.",
+    "defaultW": 50, "defaultH": 90, "defaultPaper": "coated_300", "allowedPapers": [], "defaultColor": "4+0", "minQty": 1, "priceFrom": "6 283,00" }
+
+];
+window.__DEFAULT_CATEGORIES = [
+      { key: 'polygraphy', label: 'Візитки і ділова поліграфія', short: 'Візитки', icon: '💳', desc: 'Візитки (стандарт, євро, soft-touch, зі згином) та бірки/ярлики на картоні 300–350 г/м².' },
+      { key: 'advertising', label: 'Рекламна поліграфія', short: 'Реклама', icon: '📣', desc: 'Флаєри всіх форматів, купони, квитки, воблери, шельтхалтери, тейбл-тенти — все, що продає.' },
+      { key: 'stickers', label: 'Нахлейки та етикетки', short: 'Нахлейки', icon: '🏷️', desc: 'Стікери на папері та вінілі, стікерпаки, етикетки для тари, пломби-нашліпки.' },
+      { key: 'posters', label: 'Постери та афіші', short: 'Постери', icon: '🖼️', desc: 'Постери А4–А3, афіші заходів, навчальні плакати, фотодрук.' },
+      { key: 'booklets', label: 'Буклети та багатосторінкові видання', short: 'Буклети', icon: '📖', desc: 'Буклети зі згинами, брошури на скобі/пружині, каталоги. Тираж до 1000 прим. — далі офсет.' },
+      { key: 'office', label: 'Офісна документація', short: 'Офіс', icon: '🗂️', desc: 'Фірмові бланки, конверти, грамоти, презентації, блокноти, папки, меню.' },
+      { key: 'gifts', label: 'Подарунки та календарі', short: 'Подарунки', icon: '🎁', desc: 'Листівки, запрошення, настільні та настінні календарі, плнінги, сувеніри.' },
+      { key: 'merch', label: 'Мерч з логотипом', short: 'Мерч', icon: '👕', desc: 'Одяг та аксесуари з вашим логотипом. Друк на готових виробах (DTF/термоперенесення): тираж × ціна/шт + макетування (+).' },
+      { key: 'packages', label: 'Готові пакунки', short: 'Пакунки', icon: '📦', desc: 'Комплексні набори поліграфії зі знижкою ~10%. Допечатна підготовка всіх макетів уже включена у ціну.' }
+    ];
+</script>
+
+<script>
+// === APPLICATION LOGIC ===
+(function() {
+  'use strict';
+
+  const STORAGE_KEY = 'alfaAdminState_v1';
+  const PHOTO_STORAGE_LIMIT = 4 * 1024 * 1024; // 4MB max for photos in localStorage
+
+  // ---------- State ----------
+  let state = loadState();
+  let currentProductId = null;
+  let currentTab = 'products';
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const s = JSON.parse(raw);
+        if (s && Array.isArray(s.products) && Array.isArray(s.categories)) return s;
+      }
+    } catch(e) { console.warn('load state failed:', e); }
+    return {
+      products: (window.__DEFAULT_PRODUCTS || []).map(p => { const c = {...p}; delete c._isNew; return c; }),
+      categories: (window.__DEFAULT_CATEGORIES || []).map(c => ({...c})),
+      prices: JSON.parse(JSON.stringify(window.__DEFAULT_PRICES || {})),
+      updatedAt: null
+    };
+  }
+
+  let saveTimer = null;
+  function scheduleSave() {
+    setSaveIndicator('dirty');
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      saveState();
+    }, 400);
+  }
+
+  function saveState() {
+    setSaveIndicator('saving');
+    try {
+      state.updatedAt = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      setSaveIndicator('saved');
+      updateCounts();
+      updateStats();
+    } catch(e) {
+      console.error('Save failed:', e);
+      setSaveIndicator('error');
+      toast('Не вдалось зберегти — можливо localStorage переповнений (забагато base64-фото).', 'err');
+    }
+  }
+
+  function setSaveIndicator(s) {
+    const el = document.getElementById('saveIndicator');
+    el.classList.remove('dirty', 'saving');
+    const text = document.getElementById('saveText');
+    if (s === 'dirty') { el.classList.add('dirty'); text.textContent = 'Не збережено'; }
+    else if (s === 'saving') { el.classList.add('saving'); text.textContent = 'Збереження…'; }
+    else if (s === 'saved') { text.textContent = 'Збережено'; }
+    else if (s === 'error') { text.textContent = 'Помилка!'; }
+  }
+
+  // ---------- Utils ----------
+  function toast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show ' + (type || '');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  function uid(prefix) {
+    return (prefix || 'p') + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+
+  function fmtPrice(v) {
+    if (v == null || v === '') return '—';
+    return v.toString();
+  }
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return s.toString()
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  }
+
+  // ---------- Tabs ----------
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  function switchTab(name) {
+    currentTab = name;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    document.querySelectorAll('.tab-content').forEach(s => s.classList.toggle('active', s.id === 'tab-' + name));
+    if (name === 'categories') renderCategories();
+    if (name === 'prices') renderPrices();
+    if (name === 'export') updateStats();
+  }
+
+  // ---------- Counts ----------
+  function updateCounts() {
+    document.getElementById('cntProducts').textContent = state.products.length;
+    document.getElementById('cntCategories').textContent = state.categories.length;
+  }
+  function updateStats() {
+    document.getElementById('statProducts').textContent = state.products.length;
+    document.getElementById('statCategories').textContent = state.categories.length;
+    document.getElementById('statPhotos').textContent = state.products.filter(p => p.photo).length;
+    document.getElementById('statSaved').textContent = state.updatedAt
+      ? new Date(state.updatedAt).toLocaleString('uk-UA', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})
+      : '—';
+  }
+
+  // ---------- Category filter ----------
+  function populateCategoryFilter() {
+    const sel = document.getElementById('categoryFilter');
+    sel.innerHTML = '<option value="">Всі категорії</option>' +
+      state.categories.map(c => `<option value="${c.key}">${escapeHtml(c.icon || '')} ${escapeHtml(c.label)}</option>`).join('');
+  }
+
+  // ---------- Products render ----------
+  function renderProductList() {
+    const q = (document.getElementById('productSearch').value || '').toLowerCase().trim();
+    const catF = document.getElementById('categoryFilter').value;
+    let list = state.products.slice();
+    if (q) list = list.filter(p =>
+      (p.name || '').toLowerCase().includes(q) ||
+      (p.id || '').toLowerCase().includes(q) ||
+      (p.desc || '').toLowerCase().includes(q)
+    );
+    if (catF) list = list.filter(p => p.category === catF);
+
+    const html = list.map(p => {
+      const active = p.id === currentProductId ? 'active' : '';
+      const photoCls = p.photo ? 'has' : '';
+      const isNew = p._isNew ? '<span class="p-new-badge">NEW</span>' : '';
+      const priceTag = productPriceLabel(p);
+      return `
+        <div class="product-row ${active}" data-id="${escapeHtml(p.id)}">
+          <div class="p-icon">${escapeHtml(p.icon || '📦')}</div>
+          <div class="p-main">
+            <div class="p-name">${escapeHtml(p.name || '')} ${isNew}</div>
+            <div class="p-meta">${escapeHtml(productSubLine(p))}</div>
+          </div>
+          <div class="p-photo-indicator ${photoCls}" title="${p.photo ? 'є фото' : 'без фото'}"></div>
+          <div class="p-price">${escapeHtml(priceTag)}</div>
+        </div>
+      `;
+    }).join('');
+    document.getElementById('productList').innerHTML = html || '<div class="empty-state">Нічого не знайдено</div>';
+
+    document.querySelectorAll('.product-row').forEach(row => {
+      row.addEventListener('click', () => selectProduct(row.dataset.id));
+    });
+  }
+
+  function productSubLine(p) {
+    if (p.kind === 'package') return (p.contents || []).length + ' поз. • економія ~10%';
+    if (p.kind === 'merch') return 'від ' + (p.minQty || 1) + ' шт • ' + (p.applyMethod || 'друк лого');
+    if (p.kind === 'simple') {
+      const r = (p.tiers && p.tiers[0]) ? p.tiers[0].price : (p.priceFrom || 0);
+      return 'від ' + (p.minQty || 1) + ' шт • ' + r + ' ₴/шт' + (p.subcategory ? ' • ' + p.subcategory : '');
+    }
+    return (p.defaultW || '?') + '×' + (p.defaultH || '?') + ' мм • від ' + (p.minQty || 1) + ' шт';
+  }
+
+  function productPriceLabel(p) {
+    if (p.kind === 'package') return (p.pkgPrice || p.priceFrom || 0) + ' ₴/компл';
+    if (p.kind === 'merch') return (p.unitPrice || 0) + ' ₴/шт';
+    if (p.kind === 'simple') {
+      const r = (p.tiers && p.tiers[0]) ? p.tiers[0].price : (p.priceFrom || 0);
+      return 'від ' + r + ' ₴/шт';
+    }
+    return 'від ' + (p.priceFrom || 0) + ' ₴';
+  }
+
+  function selectProduct(id) {
+    currentProductId = id;
+    renderProductList();
+    renderEditor();
+  }
+
+  // ---------- Editor ----------
+  function renderEditor() {
+    const p = state.products.find(x => x.id === currentProductId);
+    if (!p) {
+      document.getElementById('editorTitle').textContent = 'Оберіть товар';
+      document.getElementById('editorActions').innerHTML = '';
+      document.getElementById('editorBody').innerHTML = `
+        <div class="editor-empty">
+          <div class="emoji">📦</div>
+          <h3>Редактор товару</h3>
+          <p>Виберіть товар зі списку ліворуч або натисніть «+ Додати», щоб створити нову позицію каталогу.</p>
+        </div>`;
+      return;
+    }
+    document.getElementById('editorTitle').textContent = (p.icon || '📦') + ' ' + (p.name || 'Без назви');
+    document.getElementById('editorActions').innerHTML = `
+      <button class="btn btn-sm" id="dupBtn" title="Дублювати">⧉</button>
+      <button class="btn btn-sm btn-danger" id="delBtn" title="Видалити">🗑</button>
+    `;
+    document.getElementById('dupBtn').addEventListener('click', () => duplicateProduct(p.id));
+    document.getElementById('delBtn').addEventListener('click', () => deleteProduct(p.id));
+
+    const isSimple = p.kind === 'simple';
+    const isMerch = p.kind === 'merch';
+    const isPackage = p.kind === 'package';
+    const isPrint = !p.kind || p.kind === 'print';
+
+    document.getElementById('editorBody').innerHTML = `
+      <div class="form-section">
+        <div class="form-section-title">Основне</div>
+        <div class="form-grid">
+          <div>
+            <label>Назва *</label>
+            <input type="text" data-f="name" value="${escapeHtml(p.name || '')}" placeholder="Напр. Візитка преміум">
+          </div>
+          <div>
+            <label>Артикул / ID *</label>
+            <input type="text" data-f="id" value="${escapeHtml(p.id || '')}" placeholder="business-card-premium">
+          </div>
+          <div>
+            <label>Іконка (емодзі)</label>
+            <input type="text" data-f="icon" value="${escapeHtml(p.icon || '')}" placeholder="💳" maxlength="4">
+          </div>
+          <div>
+            <label>Категорія *</label>
+            <select data-f="category">
+              ${state.categories.map(c => `<option value="${escapeHtml(c.key)}" ${p.category === c.key ? 'selected' : ''}>${escapeHtml(c.label || c.key)}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label>Підкатегорія (текст)</label>
+            <input type="text" data-f="subcategory" value="${escapeHtml(p.subcategory || '')}" placeholder="напр. Крафт / Преміум">
+          </div>
+          <div>
+            <label>Тип товару (kind)</label>
+            <select data-f="kind">
+              <option value="print" ${isPrint ? 'selected' : ''}>Друкований (А3-розкладка)</option>
+              <option value="simple" ${isSimple ? 'selected' : ''}>Простий (ціна × тираж)</option>
+              <option value="merch" ${isMerch ? 'selected' : ''}>Мерч (одяг/аксесуари)</option>
+              <option value="package" ${isPackage ? 'selected' : ''}>Пакунок (комплект)</option>
+            </select>
+          </div>
+          <div class="full">
+            <label>Опис</label>
+            <textarea data-f="desc" rows="3" placeholder="Короткий опис виробу для картки...">${escapeHtml(p.desc || '')}</textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Фото / зображення</div>
+        <div class="photo-uploader">
+          <div class="photo-preview" id="photoPreview">
+            ${p.photo ? `<img src="${escapeHtml(p.photo)}" alt="">` : '<div class="placeholder">Натисніть, щоб завантажити фото</div>'}
+          </div>
+          <div class="photo-controls">
+            <input type="file" id="photoInput" accept="image/*" style="display:none">
+            <button class="btn" id="uploadBtn">⇧ Завантажити з пристрою</button>
+            <button class="btn btn-danger btn-sm" id="removePhotoBtn" ${!p.photo ? 'disabled' : ''}>Видалити фото</button>
+            <div>
+              <label>Або URL фото</label>
+              <input type="text" data-f="photo" value="${escapeHtml(typeof p.photo === 'string' && p.photo.startsWith('data:') ? '' : (p.photo || ''))}" placeholder="https://...">
+            </div>
+            <div class="photo-size-hint">Рекомендовано: 600×600 px, до 200 КБ. Великі фото стискаються автоматично.</div>
+          </div>
+        </div>
+      </div>
+
+      ${isPrint ? renderPrintFields(p) : ''}
+      ${isSimple ? renderSimpleFields(p) : ''}
+      ${isMerch ? renderMerchFields(p) : ''}
+      ${isPackage ? renderPackageFields(p) : ''}
+
+      <div class="form-section">
+        <div class="form-section-title">Додатково</div>
+        <div class="form-grid">
+          <div>
+            <label>Мін. тираж</label>
+            <input type="number" data-f="minQty" value="${p.minQty || 1}" min="1">
+          </div>
+          <div>
+            <label>Ціна «від» (текст для сайту)</label>
+            <input type="text" data-f="priceFrom" value="${escapeHtml(p.priceFrom || '')}" placeholder="6,25 / 1 500,00">
+          </div>
+        </div>
+      </div>
+    `;
+
+    bindEditorFieldChanges(p);
+    bindPhotoHandlers(p);
+  }
+
+  function renderPrintFields(p) {
+    const paperOpts = Object.keys(state.prices.paper || {}).map(k =>
+      `<option value="${k}">${escapeHtml(state.prices.paper[k].name)}</option>`).join('');
+    return `
+      <div class="form-section">
+        <div class="form-section-title">Розміри та матеріал</div>
+        <div class="form-grid">
+          <div>
+            <label>Ширина (мм)</label>
+            <input type="number" data-f="defaultW" value="${p.defaultW || ''}">
+          </div>
+          <div>
+            <label>Висота (мм)</label>
+            <input type="number" data-f="defaultH" value="${p.defaultH || ''}">
+          </div>
+          <div>
+            <label>Типовий папір</label>
+            <select data-f="defaultPaper">${paperOpts}</select>
+          </div>
+          <div>
+            <label>Типовий колір</label>
+            <select data-f="defaultColor">
+              ${['1+0','1+1','4+0','4+4'].map(c => `<option value="${c}" ${p.defaultColor === c ? 'selected' : ''}>${c}</option>`).join('')}
+            </select>
+          </div>
+          <div class="full">
+            <label>Дозволені папери</label>
+            <div class="pill-list" id="allowedPapers">
+              ${(p.allowedPapers || []).map(k => `<span class="pill">${escapeHtml(k)} <span class="pill-del" data-paper="${escapeHtml(k)}">×</span></span>`).join('')}
+              <input type="text" class="pill-add-input" id="paperAddInput" placeholder="Додати...">
+            </div>
+            <div class="field-hint">Доступні: ${Object.keys(state.prices.paper || {}).join(', ')}</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">Постпресс (типовий)</div>
+        <div class="form-grid">
+          ${['defaultLam','defaultScoring','defaultCorners','defaultPlotter','defaultHole','defaultPerforation','defaultSpring'].map(f => `
+            <div class="checkbox-field">
+              <input type="checkbox" data-f="${f}" data-bool="1" id="chk_${f}" ${p[f] ? 'checked' : ''}>
+              <label for="chk_${f}">${labelForField(f)}</label>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function labelForField(f) {
+    const m = {
+      defaultLam: 'Ламінація (soft-touch)',
+      defaultScoring: 'Біговка',
+      defaultCorners: 'Скруглення кутів',
+      defaultPlotter: 'Плотерна висічка',
+      defaultHole: 'Свердління отвору',
+      defaultPerforation: 'Перфорація',
+      defaultSpring: 'Пружина'
+    };
+    return m[f] || f;
+  }
+
+  function renderSimpleFields(p) {
+    const tiers = p.tiers || [];
+    return `
+      <div class="form-section">
+        <div class="form-section-title">Ціни за тиражами (щаблі)</div>
+        <div class="field-hint" style="margin-bottom: 8px;">
+          Кожен щабель — «від N шт → ціна X ₴/шт». Сайт обирає найвищу ціну, де N ≤ введений тираж.
+        </div>
+        <div class="tiers-header">
+          <div>Від (шт)</div><div>Ціна ₴/шт</div><div>Сума за 1 шт</div><div></div>
+        </div>
+        <div class="tiers-editor" id="tiersEditor">
+          ${tiers.map((t, i) => `
+            <div class="tiers-row" data-i="${i}">
+              <input type="number" data-tier="qty" value="${t.qty}" min="1" placeholder="1">
+              <input type="number" data-tier="price" value="${t.price}" step="0.01" placeholder="0">
+              <input type="text" data-tier="note" value="${escapeHtml(t.note || '')}" placeholder="нотатка" style="opacity:.6">
+              <button class="tier-del" data-i="${i}" title="Видалити">×</button>
+            </div>
+          `).join('')}
+        </div>
+        <button class="btn btn-sm" id="addTierBtn" style="margin-top: 8px;">+ Додати щабель</button>
+        <div class="form-grid" style="margin-top: 12px;">
+          <div>
+            <label>Макс. тираж</label>
+            <input type="number" data-f="maxQty" value="${p.maxQty || 1000}">
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderMerchFields(p) {
+    return `
+      <div class="form-section">
+        <div class="form-section-title">Мерч-параметри</div>
+        <div class="form-grid">
+          <div>
+            <label>Ціна за одиницю (₴)</label>
+            <input type="number" data-f="unitPrice" value="${p.unitPrice || 0}" step="0.01">
+          </div>
+          <div>
+            <label>Метод нанесення</label>
+            <input type="text" data-f="applyMethod" value="${escapeHtml(p.applyMethod || '')}" placeholder="DTF-принт / Вишивка / Шовкографія">
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderPackageFields(p) {
+    const items = p.items || [];
+    const contents = p.contents || [];
+    const productOpts = state.products.filter(x => x.id !== p.id).map(x =>
+      `<option value="${escapeHtml(x.id)}">${escapeHtml(x.name)}</option>`).join('');
+    return `
+      <div class="form-section">
+        <div class="form-section-title">Склад пакунка</div>
+        <div class="field-hint" style="margin-bottom: 8px;">Кожна позиція — посилання на товар + кількість. Ціна комплекту = сума × 0.9 (знижка 10%).</div>
+        <div class="tiers-header" style="grid-template-columns: 1fr 80px 28px;">
+          <div>Товар</div><div>К-ть</div><div></div>
+        </div>
+        <div class="tiers-editor" id="pkgItems">
+          ${items.map((it, i) => `
+            <div class="tiers-row pkg-row" data-i="${i}" style="grid-template-columns: 1fr 80px 28px;">
+              <select data-pkg="id">${state.products.map(x => `<option value="${escapeHtml(x.id)}" ${it.id === x.id ? 'selected' : ''}>${escapeHtml(x.name)}</option>`).join('')}</select>
+              <input type="number" data-pkg="qty" value="${it.qty || 1}" min="1">
+              <button class="tier-del" data-i="${i}">×</button>
+            </div>
+          `).join('')}
+        </div>
+        <button class="btn btn-sm" id="addPkgItemBtn" style="margin-top: 8px;">+ Додати позицію</button>
+        <div class="form-grid" style="margin-top: 12px;">
+          <div>
+            <label>Ціна пакунка (₴)</label>
+            <input type="number" data-f="pkgPrice" value="${p.pkgPrice || 0}">
+          </div>
+        </div>
+        <div class="field-hint" style="margin-top: 6px;">Опис складу (для сайту): ${escapeHtml(contents.join(' · ') || '—')}</div>
+      </div>
+    `;
+  }
+
+  function bindEditorFieldChanges(p) {
+    document.querySelectorAll('[data-f]').forEach(el => {
+      const f = el.dataset.f;
+      if (el.tagName === 'SELECT' && f === 'defaultPaper') {
+        el.value = p.defaultPaper || '';
+      }
+      el.addEventListener('input', () => {
+        if (el.dataset.bool) p[f] = el.checked;
+        else if (el.type === 'number') p[f] = parseFloat(el.value) || 0;
+        else p[f] = el.value;
+        if (f === 'id') {
+          // заборона дублів
+          const exists = state.products.filter(x => x.id === p.id).length;
+          // ok
+        }
+        if (f === 'name' || f === 'icon') {
+          document.getElementById('editorTitle').textContent = (p.icon || '📦') + ' ' + (p.name || 'Без назви');
+          renderProductList();
+        }
+        scheduleSave();
+      });
+      el.addEventListener('change', () => {
+        if (f === 'kind') { selectProduct(p.id); } // перерендерити
+      });
+    });
+
+    // Allowed papers pills
+    const addInput = document.getElementById('paperAddInput');
+    if (addInput) {
+      addInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && addInput.value.trim()) {
+          e.preventDefault();
+          const v = addInput.value.trim();
+          if (!p.allowedPapers) p.allowedPapers = [];
+          if (!p.allowedPapers.includes(v) && (state.prices.paper || {})[v]) {
+            p.allowedPapers.push(v);
+            addInput.value = '';
+            renderEditor();
+            scheduleSave();
+          } else if (!(state.prices.paper || {})[v]) {
+            toast('Такого паперу немає в тарифах. Спершу додайте його у вкладці «Ціни».', 'err');
+          }
+        }
+      });
+      document.querySelectorAll('.pill-del[data-paper]').forEach(b => {
+        b.addEventListener('click', () => {
+          const v = b.dataset.paper;
+          p.allowedPapers = (p.allowedPapers || []).filter(x => x !== v);
+          renderEditor();
+          scheduleSave();
+        });
+      });
+    }
+
+    // Tiers editor
+    const tiersEditor = document.getElementById('tiersEditor');
+    if (tiersEditor) {
+      tiersEditor.querySelectorAll('[data-tier]').forEach(inp => {
+        inp.addEventListener('input', () => {
+          const i = parseInt(inp.closest('.tiers-row').dataset.i, 10);
+          const f = inp.dataset.tier;
+          if (!p.tiers) p.tiers = [];
+          if (!p.tiers[i]) p.tiers[i] = { qty: 1, price: 0 };
+          if (f === 'qty') p.tiers[i].qty = parseInt(inp.value, 10) || 1;
+          else if (f === 'price') p.tiers[i].price = parseFloat(inp.value) || 0;
+          else if (f === 'note') p.tiers[i].note = inp.value;
+          scheduleSave();
+        });
+      });
+      tiersEditor.querySelectorAll('.tier-del').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const i = parseInt(btn.dataset.i, 10);
+          p.tiers.splice(i, 1);
+          renderEditor();
+          scheduleSave();
+        });
+      });
+      const addTierBtn = document.getElementById('addTierBtn');
+      if (addTierBtn) addTierBtn.addEventListener('click', () => {
+        if (!p.tiers) p.tiers = [];
+        const last = p.tiers[p.tiers.length - 1];
+        const newQty = last ? last.qty * 2 : 1;
+        const newPrice = last ? Math.round(last.price * 0.9 * 100) / 100 : 100;
+        p.tiers.push({ qty: newQty, price: newPrice });
+        renderEditor();
+        scheduleSave();
+      });
+    }
+
+    // Package items
+    const pkgItems = document.getElementById('pkgItems');
+    if (pkgItems) {
+      pkgItems.querySelectorAll('[data-pkg]').forEach(inp => {
+        inp.addEventListener('change', () => {
+          const i = parseInt(inp.closest('.tiers-row').dataset.i, 10);
+          const f = inp.dataset.pkg;
+          if (!p.items) p.items = [];
+          if (!p.items[i]) p.items[i] = { id: '', qty: 1 };
+          if (f === 'id') p.items[i].id = inp.value;
+          else if (f === 'qty') p.items[i].qty = parseInt(inp.value, 10) || 1;
+          // Оновити contents
+          p.contents = p.items.map(it => {
+            const pr = state.products.find(x => x.id === it.id);
+            return pr ? (pr.name + ' — ' + it.qty + ' шт') : (it.id + ' — ' + it.qty + ' шт');
+          });
+          scheduleSave();
+        });
+      });
+      pkgItems.querySelectorAll('.tier-del').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const i = parseInt(btn.dataset.i, 10);
+          p.items.splice(i, 1);
+          p.contents.splice(i, 1);
+          renderEditor();
+          scheduleSave();
+        });
+      });
+      const addPkgBtn = document.getElementById('addPkgItemBtn');
+      if (addPkgBtn) addPkgBtn.addEventListener('click', () => {
+        if (!p.items) p.items = [];
+        p.items.push({ id: '', qty: 1 });
+        if (!p.contents) p.contents = [];
+        p.contents.push('');
+        renderEditor();
+        scheduleSave();
+      });
+    }
+  }
+
+  function bindPhotoHandlers(p) {
+    const preview = document.getElementById('photoPreview');
+    const input = document.getElementById('photoInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const removeBtn = document.getElementById('removePhotoBtn');
+    if (uploadBtn && input) {
+      uploadBtn.addEventListener('click', () => input.click());
+      preview.addEventListener('click', () => input.click());
+      input.addEventListener('change', () => {
+        const file = input.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+          toast('Файл занадто великий (до 5 МБ).', 'err');
+          return;
+        }
+        // Стиснути через canvas до max 600px
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const maxDim = 600;
+            let { width, height } = img;
+            if (width > height && width > maxDim) { height = Math.round(height * maxDim / width); width = maxDim; }
+            else if (height > maxDim) { width = Math.round(width * maxDim / height); height = maxDim; }
+            canvas.width = width; canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+            p.photo = dataUrl;
+            renderEditor();
+            renderProductList();
+            scheduleSave();
+            toast('Фото завантажено і стиснуто до ' + Math.round(dataUrl.length / 1024) + ' КБ.', 'ok');
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    if (removeBtn) removeBtn.addEventListener('click', () => {
+      p.photo = '';
+      renderEditor();
+      renderProductList();
+      scheduleSave();
+    });
+  }
+
+  // ---------- Product actions ----------
+  function addProduct() {
+    const p = {
+      id: uid('custom'),
+      name: 'Новий товар',
+      category: state.categories[0]?.key || 'polygraphy',
+      icon: '📦',
+      desc: '',
+      defaultW: 90, defaultH: 50,
+      defaultPaper: 'coated_300', allowedPapers: ['coated_300'],
+      defaultColor: '4+0', minQty: 100, priceFrom: '',
+      kind: 'print',
+      _isNew: true
+    };
+    state.products.push(p);
+    currentProductId = p.id;
+    renderProductList();
+    renderEditor();
+    scheduleSave();
+    toast('Створено новий товар. Заповніть поля праворуч.', 'ok');
+  }
+
+  function duplicateProduct(id) {
+    const src = state.products.find(x => x.id === id);
+    if (!src) return;
+    const copy = JSON.parse(JSON.stringify(src));
+    copy.id = uid(src.id.split('-')[0] || 'custom');
+    copy.name = (src.name || '') + ' (копія)';
+    copy._isNew = true;
+    if (copy.tiers) copy.tiers = copy.tiers.map(t => ({...t}));
+    if (copy.items) copy.items = copy.items.map(i => ({...i}));
+    state.products.push(copy);
+    currentProductId = copy.id;
+    renderProductList();
+    renderEditor();
+    scheduleSave();
+    toast('Товар дубльовано.', 'ok');
+  }
+
+  function deleteProduct(id) {
+    const p = state.products.find(x => x.id === id);
+    if (!p) return;
+    openModal(`
+      <h3>Видалити товар?</h3>
+      <p style="font-size: 13px; line-height: 1.6; color: var(--text-muted);">
+        Видалити <strong style="color: var(--text-main);">${escapeHtml(p.name || '')}</strong>?
+        Цю дію не можна скасувати.
+      </p>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal()">Скасувати</button>
+        <button class="btn btn-danger" id="confirmDelBtn">Видалити</button>
+      </div>
+    `);
+    document.getElementById('confirmDelBtn').addEventListener('click', () => {
+      state.products = state.products.filter(x => x.id !== id);
+      if (currentProductId === id) currentProductId = null;
+      renderProductList();
+      renderEditor();
+      scheduleSave();
+      closeModal();
+      toast('Товар видалено.', 'ok');
+    });
+  }
+
+  // ---------- Categories ----------
+  function renderCategories() {
+    const html = state.categories.map(c => {
+      const prodCount = state.products.filter(p => p.category === c.key).length;
+      const subs = c.subs || [];
+      return `
+        <div class="cat-card" data-key="${escapeHtml(c.key)}">
+          <div class="cat-card-header">
+            <div class="cat-icon">${escapeHtml(c.icon || '📁')}</div>
+            <div class="cat-title">
+              <h3>${escapeHtml(c.label || '')}</h3>
+              <div class="cat-key">${escapeHtml(c.key)} • ${prodCount} тов.</div>
+            </div>
+            <div class="cat-actions">
+              <button class="btn btn-sm" data-cat-edit="${escapeHtml(c.key)}">✎</button>
+              <button class="btn btn-sm btn-danger" data-cat-del="${escapeHtml(c.key)}">🗑</button>
+            </div>
+          </div>
+          <div>
+            <label>Опис</label>
+            <textarea data-cat="desc" data-key="${escapeHtml(c.key)}" rows="2">${escapeHtml(c.desc || '')}</textarea>
+          </div>
+          <div style="margin-top: 12px;">
+            <label>Коротка назва</label>
+            <input type="text" data-cat="short" data-key="${escapeHtml(c.key)}" value="${escapeHtml(c.short || '')}">
+          </div>
+          <div class="sub-list">
+            ${subs.map((s, i) => `
+              <div class="sub-row">
+                <span class="sub-icon">${escapeHtml(s.icon || '•')}</span>
+                <span class="sub-name">${escapeHtml(s.label || s.key)}</span>
+                <span class="sub-key">${escapeHtml(s.key)}</span>
+                <button class="sub-del" data-cat="${escapeHtml(c.key)}" data-sub-i="${i}" title="Видалити">×</button>
+              </div>
+            `).join('')}
+          </div>
+          <div class="sub-add-form">
+            <input type="text" data-sub-add-key="${escapeHtml(c.key)}" placeholder="key" style="flex: 0.5;">
+            <input type="text" data-sub-add-label="${escapeHtml(c.key)}" placeholder="Назва підкатегорії">
+            <button class="btn btn-sm" data-sub-add-btn="${escapeHtml(c.key)}">+</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+    document.getElementById('categoriesList').innerHTML = html;
+
+    // bind
+    document.querySelectorAll('[data-cat]').forEach(el => {
+      el.addEventListener('input', () => {
+        const k = el.dataset.key;
+        const c = state.categories.find(x => x.key === k);
+        if (!c) return;
+        c[el.dataset.cat] = el.value;
+        if (el.dataset.cat === 'short' || el.dataset.cat === 'desc') renderCategories_debounced();
+        scheduleSave();
+      });
+    });
+    document.querySelectorAll('[data-cat-edit]').forEach(b => {
+      b.addEventListener('click', () => editCategory(b.dataset.catEdit));
+    });
+    document.querySelectorAll('[data-cat-del]').forEach(b => {
+      b.addEventListener('click', () => deleteCategory(b.dataset.catDel));
+    });
+    document.querySelectorAll('.sub-del').forEach(b => {
+      b.addEventListener('click', () => {
+        const c = state.categories.find(x => x.key === b.dataset.cat);
+        if (!c || !c.subs) return;
+        c.subs.splice(parseInt(b.dataset.subI, 10), 1);
+        renderCategories();
+        scheduleSave();
+      });
+    });
+    document.querySelectorAll('[data-sub-add-btn]').forEach(b => {
+      b.addEventListener('click', () => {
+        const k = b.dataset.subAddBtn;
+        const c = state.categories.find(x => x.key === k);
+        if (!c) return;
+        if (!c.subs) c.subs = [];
+        const keyI = document.querySelector(`[data-sub-add-key="${k}"]`);
+        const labelI = document.querySelector(`[data-sub-add-label="${k}"]`);
+        const sk = (keyI.value || '').trim() || labelI.value.toLowerCase().replace(/\s+/g, '-');
+        if (!sk) return;
+        if (c.subs.find(s => s.key === sk)) { toast('Підкатегорія з таким ключем вже є', 'err'); return; }
+        c.subs.push({ key: sk, label: labelI.value || sk, icon: '•' });
+        keyI.value = ''; labelI.value = '';
+        renderCategories();
+        scheduleSave();
+      });
+    });
+  }
+
+  let catSaveTimer = null;
+  function renderCategories_debounced() {
+    if (catSaveTimer) clearTimeout(catSaveTimer);
+    catSaveTimer = setTimeout(() => renderCategories(), 500);
+  }
+
+  function addCategory() {
+    const k = 'cat-' + Date.now().toString(36);
+    const c = { key: k, label: 'Нова категорія', short: 'Нова', icon: '📁', desc: '', subs: [] };
+    state.categories.push(c);
+    populateCategoryFilter();
+    renderCategories();
+    updateCounts();
+    scheduleSave();
+    editCategory(k);
+  }
+
+  function editCategory(key) {
+    const c = state.categories.find(x => x.key === key);
+    if (!c) return;
+    openModal(`
+      <h3>Редагувати категорію</h3>
+      <div class="form-grid">
+        <div>
+          <label>Ключ (англ)</label>
+          <input type="text" id="catKey" value="${escapeHtml(c.key)}">
+        </div>
+        <div>
+          <label>Іконка</label>
+          <input type="text" id="catIcon" value="${escapeHtml(c.icon || '')}" maxlength="4">
+        </div>
+        <div class="full">
+          <label>Повна назва</label>
+          <input type="text" id="catLabel" value="${escapeHtml(c.label || '')}">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal()">Скасувати</button>
+        <button class="btn btn-primary" id="saveCatBtn">Зберегти</button>
+      </div>
+    `);
+    document.getElementById('saveCatBtn').addEventListener('click', () => {
+      const newKey = document.getElementById('catKey').value.trim() || c.key;
+      const oldKey = c.key;
+      c.key = newKey;
+      c.icon = document.getElementById('catIcon').value;
+      c.label = document.getElementById('catLabel').value;
+      if (newKey !== oldKey) {
+        state.products.forEach(p => { if (p.category === oldKey) p.category = newKey; });
+      }
+      populateCategoryFilter();
+      renderCategories();
+      scheduleSave();
+      closeModal();
+      toast('Категорію оновлено.', 'ok');
+    });
+  }
+
+  function deleteCategory(key) {
+    const cnt = state.products.filter(p => p.category === key).length;
+    openModal(`
+      <h3>Видалити категорію?</h3>
+      <p style="font-size: 13px; line-height: 1.6; color: var(--text-muted);">
+        Категорію <strong style="color: var(--text-main);">${escapeHtml(key)}</strong>${cnt ? ` та всі <strong>${cnt}</strong> товарів у ній` : ''} буде видалено назавжди.
+      </p>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal()">Скасувати</button>
+        <button class="btn btn-danger" id="confirmCatDelBtn">Видалити</button>
+      </div>
+    `);
+    document.getElementById('confirmCatDelBtn').addEventListener('click', () => {
+      state.products = state.products.filter(p => p.category !== key);
+      state.categories = state.categories.filter(c => c.key !== key);
+      populateCategoryFilter();
+      renderCategories();
+      renderProductList();
+      updateCounts();
+      scheduleSave();
+      closeModal();
+      toast('Категорію видалено.', 'ok');
+    });
+  }
+
+  // ---------- Prices ----------
+  function renderPrices() {
+    renderSheet();
+    renderPrintTiers();
+    renderPaper();
+    renderLamination();
+    renderFinishing();
+    renderPrepress();
+  }
+
+  function renderSheet() {
+    const s = state.prices.sheet;
+    document.getElementById('sheetBlock').innerHTML = `
+      <div class="form-grid">
+        <div><label>Ширина (мм)</label><input type="number" data-price="sheet.width" value="${s.width}"></div>
+        <div><label>Висота (мм)</label><input type="number" data-price="sheet.height" value="${s.height}"></div>
+        <div><label>Корисна ширина</label><input type="number" data-price="sheet.usableW" value="${s.usableW}"></div>
+        <div><label>Корисна висота</label><input type="number" data-price="sheet.usableH" value="${s.usableH}"></div>
+        <div><label>Bleed (мм)</label><input type="number" data-price="sheet.bleed" value="${s.bleed}"></div>
+      </div>
+    `;
+    bindPriceInputs();
+  }
+
+  function renderPrintTiers() {
+    const tiers = state.prices.printTiers || {};
+    const html = Object.keys(tiers).map(color => {
+      const rows = tiers[color].map((t, i) => `
+        <tr data-color="${escapeHtml(color)}" data-i="${i}">
+          <td>${escapeHtml(color)}</td>
+          <td><input type="number" data-tier="max" value="${t.max === Infinity ? '' : t.max}" placeholder="∞" style="width: 80px;"></td>
+          <td><input type="number" data-tier="price" value="${t.price}" step="0.01" style="width: 100px;"></td>
+          <td><button class="btn btn-sm btn-danger" data-tier-del>×</button></td>
+        </tr>
+      `).join('');
+      return `
+        <div style="margin-bottom: 18px;">
+          <h4 style="font-family: var(--font-mono); font-size: 12px; color: var(--accent); margin-bottom: 6px;">${escapeHtml(color)}</h4>
+          <table class="tiers-table">
+            <thead><tr><th>Колір</th><th>До (шт)</th><th>Ціна ₴/аркуш</th><th></th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+          <button class="btn btn-sm" data-add-tier-color="${escapeHtml(color)}" style="margin-top: 6px;">+ Додати щабель</button>
+        </div>
+      `;
+    }).join('');
+    document.getElementById('printTiersBlock').innerHTML = html;
+    bindTierInputs();
+  }
+
+  function renderPaper() {
+    const p = state.prices.paper || {};
+    const rows = Object.keys(p).map(k => `
+      <div class="kv-row" data-key="${escapeHtml(k)}">
+        <input type="text" data-paper-key value="${escapeHtml(k)}" class="kv-label" readonly style="font-family: var(--font-mono); font-size: 11px;">
+        <input type="number" data-paper-price value="${p[k].price}" step="0.01" placeholder="ціна">
+        <button class="kv-del" data-paper-del="${escapeHtml(k)}">×</button>
+      </div>
+    `).join('');
+    document.getElementById('paperBlock').innerHTML = `
+      <div class="kv-list">${rows}</div>
+      <div class="inline-add">
+        <input type="text" id="newPaperKey" placeholder="Ключ (напр. coated_400)" style="flex: 1;">
+        <input type="text" id="newPaperName" placeholder="Назва (напр. 400 г/м² Крейдований)" style="flex: 1.5;">
+        <input type="number" id="newPaperPrice" placeholder="Ціна" style="width: 100px;">
+        <button class="btn btn-sm btn-primary" id="addPaperBtn">+</button>
+      </div>
+    `;
+    bindPaperInputs();
+  }
+
+  function renderLamination() { renderPriceGroup('lamination', 'laminationBlock', 'ламінації'); }
+  function renderFinishing() { renderFinishingBlock(); }
+  function renderPrepress() {
+    const p = state.prices.prepress || {};
+    document.getElementById('prepressBlock').innerHTML = `
+      <div class="form-grid">
+        <div><label>Назва</label><input type="text" data-price="prepress.name" value="${escapeHtml(p.name || '')}"></div>
+        <div><label>Ціна (₴)</label><input type="number" data-price="prepress.price" value="${p.price || 0}" step="0.01"></div>
+      </div>
+      <div class="form-grid" style="margin-top: 12px;">
+        <div><label>blockSetup (₴)</label><input type="number" data-price="blockSetup" value="${state.prices.blockSetup || 0}" step="0.01"></div>
+      </div>
+    `;
+    bindPriceInputs();
+  }
+
+  function renderPriceGroup(group, blockId, label) {
+    const g = state.prices[group] || {};
+    const rows = Object.keys(g).map(k => {
+      const v = g[k];
+      const hasSetup = v && typeof v.setup !== 'undefined';
+      return `
+        <div class="kv-row" data-key="${escapeHtml(k)}" style="grid-template-columns: 1fr 100px 80px 28px;">
+          <input type="text" value="${escapeHtml(k)}" readonly class="kv-label" style="font-family: var(--font-mono); font-size: 11px;">
+          <input type="number" data-group-name value="${v && v.name ? '' : (v || 0)}" placeholder="${v && v.name ? escapeHtml(v.name) : 'ціна'}" ${v && v.name ? 'style="display:none;"' : ''}>
+          ${v && v.name ? `<input type="text" data-group-name value="${escapeHtml(v.name)}" placeholder="Назва">` : ''}
+          <input type="number" data-group-price value="${v && v.price != null ? v.price : (v || 0)}" step="0.01" placeholder="ціна">
+          ${hasSetup ? `<input type="number" data-group-setup value="${v.setup}" step="0.01" placeholder="setup" style="grid-column: span 1;">` : ''}
+          <button class="kv-del" data-group-del="${escapeHtml(k)}">×</button>
+        </div>
+      `;
+    }).join('');
+    document.getElementById(blockId).innerHTML = `
+      <div class="kv-list">${rows}</div>
+      <div class="inline-add">
+        <input type="text" id="new_${group}_key" placeholder="Ключ" style="flex: 1;">
+        <input type="text" id="new_${group}_name" placeholder="Назва" style="flex: 1.5;">
+        <input type="number" id="new_${group}_price" placeholder="Ціна" style="width: 100px;">
+        <button class="btn btn-sm btn-primary" id="add_${group}_btn">+</button>
+      </div>
+    `;
+    bindGroupInputs(group);
+  }
+
+  function renderFinishingBlock() {
+    const g = state.prices.finishing || {};
+    const rows = Object.keys(g).map(k => {
+      const v = g[k];
+      return `
+        <div class="kv-row" data-key="${escapeHtml(k)}">
+          <input type="text" value="${escapeHtml(k)}" readonly class="kv-label" style="font-family: var(--font-mono); font-size: 11px;">
+          <input type="text" data-fin-name value="${escapeHtml(v.name || '')}" placeholder="Назва">
+          <button class="kv-del" data-fin-del="${escapeHtml(k)}">×</button>
+        </div>
+        <div class="kv-row" style="grid-template-columns: 1fr 100px 80px 28px; margin-left: 12px;">
+          <div style="font-size: 10px; color: var(--text-dim); padding-left: 4px;">— price / setup</div>
+          <input type="number" data-fin-price value="${v.price || 0}" step="0.01" placeholder="ціна" style="grid-column: 2;">
+          <input type="number" data-fin-setup value="${v.setup || 0}" step="0.01" placeholder="setup">
+          <div></div>
+        </div>
+      `;
+    }).join('');
+    document.getElementById('finishingBlock').innerHTML = `
+      <div class="kv-list">${rows}</div>
+      <div class="inline-add">
+        <input type="text" id="new_finishing_key" placeholder="Ключ" style="flex: 1;">
+        <input type="text" id="new_finishing_name" placeholder="Назва" style="flex: 1.5;">
+        <input type="number" id="new_finishing_price" placeholder="Ціна" style="width: 100px;">
+        <input type="number" id="new_finishing_setup" placeholder="Setup" style="width: 100px;">
+        <button class="btn btn-sm btn-primary" id="add_finishing_btn">+</button>
+      </div>
+    `;
+    bindFinishingInputs();
+  }
+
+  function bindPriceInputs() {
+    document.querySelectorAll('[data-price]').forEach(el => {
+      el.addEventListener('input', () => {
+        const path = el.dataset.price.split('.');
+        let obj = state.prices;
+        for (let i = 0; i < path.length - 1; i++) obj = obj[path[i]];
+        const f = path[path.length - 1];
+        obj[f] = el.type === 'number' ? (parseFloat(el.value) || 0) : el.value;
+        scheduleSave();
+      });
+    });
+  }
+
+  function bindTierInputs() {
+    document.querySelectorAll('#printTiersBlock [data-tier]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const tr = inp.closest('tr');
+        const color = tr.dataset.color;
+        const i = parseInt(tr.dataset.i, 10);
+        const f = inp.dataset.tier;
+        const t = state.prices.printTiers[color][i];
+        if (f === 'max') t.max = inp.value === '' ? Infinity : (parseInt(inp.value, 10) || 0);
+        else if (f === 'price') t.price = parseFloat(inp.value) || 0;
+        scheduleSave();
+      });
+    });
+    document.querySelectorAll('#printTiersBlock [data-tier-del]').forEach(b => {
+      b.addEventListener('click', () => {
+        const tr = b.closest('tr');
+        const color = tr.dataset.color;
+        const i = parseInt(tr.dataset.i, 10);
+        state.prices.printTiers[color].splice(i, 1);
+        renderPrintTiers();
+        scheduleSave();
+      });
+    });
+    document.querySelectorAll('[data-add-tier-color]').forEach(b => {
+      b.addEventListener('click', () => {
+        const color = b.dataset.addTierColor;
+        state.prices.printTiers[color].push({ max: Infinity, price: 0 });
+        renderPrintTiers();
+        scheduleSave();
+      });
+    });
+  }
+
+  function bindPaperInputs() {
+    document.querySelectorAll('[data-paper-price]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const k = inp.closest('.kv-row').dataset.key;
+        state.prices.paper[k].price = parseFloat(inp.value) || 0;
+        scheduleSave();
+      });
+    });
+    document.querySelectorAll('[data-paper-del]').forEach(b => {
+      b.addEventListener('click', () => {
+        const k = b.dataset.paperDel;
+        delete state.prices.paper[k];
+        renderPaper();
+        scheduleSave();
+      });
+    });
+    document.getElementById('addPaperBtn').addEventListener('click', () => {
+      const k = document.getElementById('newPaperKey').value.trim();
+      const n = document.getElementById('newPaperName').value.trim();
+      const p = parseFloat(document.getElementById('newPaperPrice').value) || 0;
+      if (!k) { toast('Введіть ключ', 'err'); return; }
+      if (state.prices.paper[k]) { toast('Такий ключ вже є', 'err'); return; }
+      state.prices.paper[k] = { name: n || k, price: p };
+      renderPaper();
+      scheduleSave();
+    });
+  }
+
+  function bindGroupInputs(group) {
+    document.querySelectorAll(`#${group === 'lamination' ? 'laminationBlock' : ''} [data-group-name]`).forEach(inp => {
+      inp.addEventListener('input', () => {
+        const k = inp.closest('.kv-row').dataset.key;
+        if (!state.prices[group][k].name) state.prices[group][k] = { name: '', price: 0 };
+        state.prices[group][k].name = inp.value;
+        scheduleSave();
+      });
+    });
+    document.querySelectorAll(`[data-group-price]`).forEach(inp => {
+      inp.addEventListener('input', () => {
+        const k = inp.closest('.kv-row').dataset.key;
+        if (!state.prices[group][k].name) state.prices[group][k] = { name: '', price: 0 };
+        state.prices[group][k].price = parseFloat(inp.value) || 0;
+        scheduleSave();
+      });
+    });
+    document.querySelectorAll(`[data-group-del]`).forEach(b => {
+      b.addEventListener('click', () => {
+        const k = b.dataset.groupDel;
+        delete state.prices[group][k];
+        if (group === 'lamination') renderLamination();
+        scheduleSave();
+      });
+    });
+    document.getElementById(`add_${group}_btn`).addEventListener('click', () => {
+      const k = document.getElementById(`new_${group}_key`).value.trim();
+      const n = document.getElementById(`new_${group}_name`).value.trim();
+      const p = parseFloat(document.getElementById(`new_${group}_price`).value) || 0;
+      if (!k) { toast('Введіть ключ', 'err'); return; }
+      if (state.prices[group][k]) { toast('Такий ключ вже є', 'err'); return; }
+      state.prices[group][k] = { name: n || k, price: p };
+      if (group === 'lamination') renderLamination();
+      scheduleSave();
+    });
+  }
+
+  function bindFinishingInputs() {
+    document.querySelectorAll('[data-fin-name]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const k = inp.closest('.kv-row').dataset.key;
+        state.prices.finishing[k].name = inp.value;
+        scheduleSave();
+      });
+    });
+    document.querySelectorAll('[data-fin-price]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const k = inp.closest('.kv-row').dataset.key;
+        state.prices.finishing[k].price = parseFloat(inp.value) || 0;
+        scheduleSave();
+      });
+    });
+    document.querySelectorAll('[data-fin-setup]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const k = inp.closest('.kv-row').dataset.key;
+        state.prices.finishing[k].setup = parseFloat(inp.value) || 0;
+        scheduleSave();
+      });
+    });
+    document.querySelectorAll('[data-fin-del]').forEach(b => {
+      b.addEventListener('click', () => {
+        const k = b.dataset.finDel;
+        delete state.prices.finishing[k];
+        renderFinishing();
+        scheduleSave();
+      });
+    });
+    document.getElementById('add_finishing_btn').addEventListener('click', () => {
+      const k = document.getElementById('new_finishing_key').value.trim();
+      const n = document.getElementById('new_finishing_name').value.trim();
+      const p = parseFloat(document.getElementById('new_finishing_price').value) || 0;
+      const s = parseFloat(document.getElementById('new_finishing_setup').value) || 0;
+      if (!k) { toast('Введіть ключ', 'err'); return; }
+      if (state.prices.finishing[k]) { toast('Такий ключ вже є', 'err'); return; }
+      state.prices.finishing[k] = { name: n || k, price: p, setup: s };
+      renderFinishing();
+      scheduleSave();
+    });
+  }
+
+  // ---------- Modal ----------
+  function openModal(html) {
+    document.getElementById('modalContent').innerHTML = html;
+    document.getElementById('modalOverlay').classList.add('show');
+  }
+  window.closeModal = function() {
+    document.getElementById('modalOverlay').classList.remove('show');
+  };
+  document.getElementById('modalOverlay').addEventListener('click', (e) => {
+    if (e.target.id === 'modalOverlay') closeModal();
+  });
+
+  // ---------- Export ----------
+  function buildOverride() {
+    return {
+      updatedAt: new Date().toISOString(),
+      prices: JSON.parse(JSON.stringify(state.prices)),
+      categories: JSON.parse(JSON.stringify(state.categories)),
+      products: JSON.parse(JSON.stringify(state.products.map(p => {
+        const c = {...p};
+        delete c._isNew;
+        return c;
+      })))
+    };
+  }
+
+  function downloadFile(content, filename, mime) {
+    const blob = new Blob([content], { type: mime || 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function exportOverride() {
+    const ov = buildOverride();
+    const js = '// AUTO-GENERATED by alfa.copy.print admin panel\n' +
+               '// Place this file next to index.html in your GitHub Pages repo\n' +
+               '// (or upload to https://lavandaaudit.github.io/alfa_admin/catalog-override.js).\n' +
+               '// Generated: ' + ov.updatedAt + '\n' +
+               '// Products: ' + ov.products.length + ' | Categories: ' + ov.categories.length + '\n\n' +
+               '// CATALOG_OVERRIDE_LOADED = true зупиняє повторне завантаження з GitHub CDN\n' +
+               'window.CATALOG_OVERRIDE_LOADED = true;\n' +
+               'window.CATALOG_OVERRIDE = ' + JSON.stringify(ov, null, 2) + ';\n';
+    downloadFile(js, 'catalog-override.js', 'application/javascript');
+    toast('catalog-override.js завантажено (' + Math.round(js.length / 1024) + ' КБ). Завантажте файл у GitHub репозиторій.', 'ok');
+  }
+
+  function exportJson() {
+    const ov = buildOverride();
+    downloadFile(JSON.stringify(ov, null, 2), 'admin-backup.json', 'application/json');
+    toast('Резервна копія завантажена.', 'ok');
+  }
+
+  async function copyToClipboard(text) {
+    try { await navigator.clipboard.writeText(text); toast('Скопійовано в буфер.', 'ok'); }
+    catch(e) { toast('Не вдалось скопіювати', 'err'); }
+  }
+
+  // ---------- Import ----------
+  function importJson(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (data.products && Array.isArray(data.products)) {
+          state.products = data.products;
+          state.categories = data.categories || state.categories;
+          if (data.prices) state.prices = data.prices;
+          currentProductId = null;
+          populateCategoryFilter();
+          renderProductList();
+          renderEditor();
+          renderCategories();
+          renderPrices();
+          updateCounts();
+          updateStats();
+          saveState();
+          toast('Каталог імпортовано (' + data.products.length + ' тов.).', 'ok');
+        } else {
+          toast('Невірний формат файлу.', 'err');
+        }
+      } catch(err) {
+        toast('Помилка читання JSON: ' + err.message, 'err');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // ---------- Reset ----------
+  function resetAll() {
+    openModal(`
+      <h3>Скинути все до значень за замовчуванням?</h3>
+      <p style="font-size: 13px; line-height: 1.6; color: var(--text-muted);">
+        Всі ваші зміни (товари, категорії, ціни, фото) буде втрачено. Каталог повернеться до 111 базових позицій.
+      </p>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal()">Скасувати</button>
+        <button class="btn btn-danger" id="confirmResetBtn">Скинути все</button>
+      </div>
+    `);
+    document.getElementById('confirmResetBtn').addEventListener('click', () => {
+      localStorage.removeItem(STORAGE_KEY);
+      state = {
+        products: (window.__DEFAULT_PRODUCTS || []).map(p => { const c = {...p}; delete c._isNew; return c; }),
+        categories: (window.__DEFAULT_CATEGORIES || []).map(c => ({...c})),
+        prices: JSON.parse(JSON.stringify(window.__DEFAULT_PRICES || {})),
+        updatedAt: null
+      };
+      currentProductId = null;
+      populateCategoryFilter();
+      renderProductList();
+      renderEditor();
+      renderCategories();
+      renderPrices();
+      updateCounts();
+      updateStats();
+      saveState();
+      closeModal();
+      toast('Каталог скинуто до початкового стану.', 'ok');
+    });
+  }
+
+  // ---------- Live preview ----------
+  function openPreview() {
+    const ov = buildOverride();
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Прев'ю каталогу alfa.copy.print</title>
+      <style>
+        body { font-family: -apple-system, sans-serif; background: #08090d; color: #f1f5f9; padding: 20px; }
+        h1 { color: #ffde00; font-size: 18px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+        .card { background: #171a26; border: 1px solid #232738; border-radius: 6px; padding: 12px; }
+        .card img { width: 100%; height: 120px; object-fit: cover; border-radius: 4px; margin-bottom: 8px; background: #0c0e15; }
+        .card .icon { font-size: 24px; }
+        .card .name { font-weight: 600; font-size: 13px; margin: 6px 0; }
+        .card .desc { font-size: 11px; color: #8e99ac; line-height: 1.4; }
+        .card .price { color: #ffde00; font-weight: 700; font-family: monospace; margin-top: 6px; }
+        .cat { color: #ffde00; font-size: 14px; margin: 20px 0 10px; border-bottom: 1px solid #232738; padding-bottom: 6px; }
+      </style></head><body>
+      <h1>👁 Прев'ю каталогу — ${ov.products.length} товарів</h1>
+      ${ov.categories.map(c => {
+        const prods = ov.products.filter(p => p.category === c.key);
+        if (!prods.length) return '';
+        return `<div class="cat">${c.icon || ''} ${c.label} (${prods.length})</div>
+          <div class="grid">${prods.map(p => `
+            <div class="card">
+              ${p.photo ? `<img src="${p.photo}" alt="">` : `<div class="icon">${p.icon || '📦'}</div>`}
+              <div class="name">${p.name || ''}</div>
+              <div class="desc">${(p.desc || '').slice(0, 90)}${(p.desc||'').length > 90 ? '…' : ''}</div>
+              <div class="price">${productPriceLabel(p)}</div>
+            </div>
+          `).join('')}</div>`;
+      }).join('')}
+      </body></html>`;
+    const w = window.open();
+    w.document.write(html);
+    w.document.close();
+  }
+
+  // ---------- Wire up ----------
+  document.getElementById('productSearch').addEventListener('input', renderProductList);
+  document.getElementById('categoryFilter').addEventListener('change', renderProductList);
+  document.getElementById('addProductBtn').addEventListener('click', addProduct);
+  document.getElementById('exportBtn').addEventListener('click', exportOverride);
+  document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importJsonInput').click());
+  document.getElementById('resetBtn').addEventListener('click', resetAll);
+  document.getElementById('exportOverrideBtn').addEventListener('click', exportOverride);
+  document.getElementById('exportJsonBtn').addEventListener('click', exportJson);
+  document.getElementById('copyOverrideBtn').addEventListener('click', () => {
+    const ov = buildOverride();
+    const js = 'window.CATALOG_OVERRIDE_LOADED = true;\nwindow.CATALOG_OVERRIDE = ' + JSON.stringify(ov, null, 2) + ';\n';
+    copyToClipboard(js);
+  });
+  document.getElementById('copyJsonBtn').addEventListener('click', () => copyToClipboard(JSON.stringify(buildOverride(), null, 2)));
+  document.getElementById('importJsonBtn').addEventListener('click', () => document.getElementById('importJsonInput').click());
+  document.getElementById('importJsonInput').addEventListener('change', (e) => {
+    if (e.target.files[0]) importJson(e.target.files[0]);
+    e.target.value = '';
+  });
+  document.getElementById('previewBtn').addEventListener('click', openPreview);
+
+  // ---------- Init ----------
+  populateCategoryFilter();
+  renderProductList();
+  renderEditor();
+  renderCategories();
+  renderPrices();
+  updateCounts();
+  updateStats();
+  setSaveIndicator('saved');
+})();
+</script>
+</body>
+</html>
