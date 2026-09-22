@@ -543,7 +543,8 @@
     </span>
     <button class="btn" id="importBtn">⇧ Імпорт JSON</button>
     <button class="btn btn-danger" id="resetBtn">Скинути</button>
-    <button class="btn btn-primary" id="exportBtn">⬇ Експорт catalog-override.js</button>
+    <button class="btn btn-primary" id="publishBtn" style="background: linear-gradient(135deg, #ffde00, #ffb800); display: none;">⬆ Опублікувати на сайт</button>
+    <button class="btn btn-primary" id="exportBtn">⬇ Експорт</button>
   </div>
 </header>
 
@@ -688,7 +689,7 @@
         <p class="desc">Згенеруйте файл <code>catalog-override.js</code> і завантажте його в репозиторій GitHub Pages поруч з index.html. Сайт автоматично підтягне ваші зміни при наступному завантаженні сторінки.</p>
         <button class="big-btn" id="exportOverrideBtn">⬇ Завантажити catalog-override.js</button>
         <button class="big-btn secondary" id="copyOverrideBtn">📋 Скопіювати вміст у буфер</button>
-        <div class="field-hint" style="margin-top: 12px;">URL оverride на сайті: <span style="font-family: var(--font-mono); color: var(--accent);">https://lavandaaudit.github.io/alfa_admin/catalog-override.js</span></div>
+        <div class="field-hint" style="margin-top: 12px;">URL оverride на сайті: <span style="font-family: var(--font-mono); color: var(--accent); word-break: break-all;">https://lavandaaudit.github.io/aa/catalog-override.js</span></div>
       </div>
 
       <div class="export-card">
@@ -710,6 +711,55 @@
         <p class="desc">Відкрийте каталог у новій вкладці, щоб побачити, як зміни виглядатимуть на сайті.</p>
         <button class="big-btn secondary" id="previewBtn">👁 Відкрити live-прев'ю</button>
       </div>
+    </div>
+
+    <div class="export-card" style="margin-top: 16px;">
+      <h3>⚡ Пряме збереження в GitHub</h3>
+      <p class="desc">Налаштуйте токен доступу GitHub, щоб зберігати <code>catalog-override.js</code> напряму в репозиторій з адмінки — без ручного завантаження файлу. Натискаєте «Зберегти в GitHub» → файл комітиться → сайт через 1-2 хв підтягує зміни.</p>
+
+      <div class="form-grid" style="margin-top: 12px;">
+        <div class="full">
+          <label>GitHub Personal Access Token *</label>
+          <input type="password" id="ghToken" placeholder="ghp_... або github_pat_...">
+          <div class="field-hint">
+            Створіть токен: <a href="https://github.com/settings/tokens/new?scopes=repo&description=alfa-admin-publish" target="_blank" style="color: var(--accent);">https://github.com/settings/tokens</a> →
+            Classic-токен зі scope <code>repo</code>, <strong>або</strong> Fine-grained token з правом <code>Contents: Read and write</code> на репо <code>lavandaaudit/aa</code>.
+            <br><span style="color: var(--danger);">⚠ Токен зберігається тільки в localStorage вашого браузера. Не комітьте адмінку з токеном у репо.</span>
+          </div>
+        </div>
+        <div>
+          <label>Owner</label>
+          <input type="text" id="ghOwner" value="lavandaaudit">
+        </div>
+        <div>
+          <label>Repo</label>
+          <input type="text" id="ghRepo" value="aa">
+        </div>
+        <div>
+          <label>Гілка</label>
+          <input type="text" id="ghBranch" value="main">
+        </div>
+        <div>
+          <label>Шлях до файлу</label>
+          <input type="text" id="ghPath" value="catalog-override.js">
+        </div>
+        <div>
+          <label>Committer ім'я</label>
+          <input type="text" id="ghCommitterName" value="alfa-admin">
+        </div>
+        <div>
+          <label>Committer email</label>
+          <input type="text" id="ghCommitterEmail" value="admin@alfa.local">
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap;">
+        <button class="btn" id="ghTestBtn">🔧 Перевірити зв'язок</button>
+        <button class="btn btn-primary" id="ghSaveBtn" style="min-width: 220px;">⬆ Зберегти в GitHub</button>
+        <button class="btn btn-danger btn-sm" id="ghClearBtn" title="Видалити токен з localStorage">×</button>
+      </div>
+
+      <div id="ghStatus" style="margin-top: 12px; font-size: 12px; padding: 10px; border-radius: 6px; display: none;"></div>
     </div>
   </section>
 </main>
@@ -3022,6 +3072,221 @@ window.__DEFAULT_CATEGORIES = [
     w.document.close();
   }
 
+  // ---------- GitHub direct publish ----------
+  const GH_KEYS = ['gh_token', 'gh_owner', 'gh_repo', 'gh_branch', 'gh_path', 'gh_committer_name', 'gh_committer_email'];
+
+  function loadGhSettings() {
+    const map = {
+      gh_token: 'ghToken', gh_owner: 'ghOwner', gh_repo: 'ghRepo',
+      gh_branch: 'ghBranch', gh_path: 'ghPath',
+      gh_committer_name: 'ghCommitterName', gh_committer_email: 'ghCommitterEmail'
+    };
+    const defaults = {
+      ghOwner: 'lavandaaudit', ghRepo: 'aa', ghBranch: 'main',
+      ghPath: 'catalog-override.js',
+      ghCommitterName: 'alfa-admin', ghCommitterEmail: 'admin@alfa.local'
+    };
+    Object.keys(map).forEach(k => {
+      const el = document.getElementById(map[k]);
+      if (!el) return;
+      const v = localStorage.getItem(k);
+      el.value = (v !== null ? v : (defaults[map[k]] || ''));
+    });
+  }
+
+  function getGhSettings() {
+    return {
+      token: document.getElementById('ghToken').value.trim(),
+      owner: document.getElementById('ghOwner').value.trim(),
+      repo: document.getElementById('ghRepo').value.trim(),
+      branch: document.getElementById('ghBranch').value.trim(),
+      path: document.getElementById('ghPath').value.trim(),
+      committerName: document.getElementById('ghCommitterName').value.trim(),
+      committerEmail: document.getElementById('ghCommitterEmail').value.trim()
+    };
+  }
+
+  function saveGhSettingsToLocal() {
+    const map = {
+      gh_token: 'ghToken', gh_owner: 'ghOwner', gh_repo: 'ghRepo',
+      gh_branch: 'ghBranch', gh_path: 'ghPath',
+      gh_committer_name: 'ghCommitterName', gh_committer_email: 'ghCommitterEmail'
+    };
+    Object.keys(map).forEach(k => {
+      const el = document.getElementById(map[k]);
+      if (el) localStorage.setItem(k, el.value);
+    });
+  }
+
+  function showGhStatus(msg, type) {
+    const el = document.getElementById('ghStatus');
+    el.style.display = 'block';
+    el.style.background = type === 'ok' ? 'rgba(16,185,129,.12)'
+      : type === 'err' ? 'rgba(255,77,94,.12)'
+      : 'var(--bg-input)';
+    el.style.color = type === 'ok' ? '#10b981' : type === 'err' ? '#ff4d5e' : 'var(--text-muted)';
+    el.style.border = '1px solid ' + (type === 'ok' ? 'rgba(16,185,129,.3)' : type === 'err' ? 'rgba(255,77,94,.3)' : 'var(--border)');
+    el.innerHTML = msg;
+  }
+
+  function ghApiUrl(s, action) {
+    if (action === 'get') {
+      return `https://api.github.com/repos/${s.owner}/${s.repo}/contents/${encodeURIComponent(s.path)}?ref=${encodeURIComponent(s.branch)}`;
+    }
+    return `https://api.github.com/repos/${s.owner}/${s.repo}/contents/${encodeURIComponent(s.path)}`;
+  }
+
+  function ghHeaders(s) {
+    return {
+      'Authorization': `Bearer ${s.token}`,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    };
+  }
+
+  async function ghCheckConnection() {
+    saveGhSettingsToLocal();
+    const s = getGhSettings();
+    if (!s.token) { showGhStatus('⚠ Введіть токен', 'err'); return; }
+    if (!s.owner || !s.repo) { showGhStatus('⚠ Вкажіть owner і repo', 'err'); return; }
+    showGhStatus('🔧 Перевірка зв\'язку...', 'info');
+    try {
+      // 1. Перевірити токен через /user
+      const uResp = await fetch('https://api.github.com/user', { headers: ghHeaders(s) });
+      if (!uResp.ok) {
+        const e = await uResp.json().catch(() => ({}));
+        showGhStatus(`❌ Токен невалідний (${uResp.status}): ${e.message || 'невідома помилка'}`, 'err');
+        return;
+      }
+      const u = await uResp.json();
+      // 2. Перевірити репо
+      const rResp = await fetch(`https://api.github.com/repos/${s.owner}/${s.repo}`, { headers: ghHeaders(s) });
+      if (!rResp.ok) {
+        const e = await rResp.json().catch(() => ({}));
+        showGhStatus(`❌ Репо не знайдено (${rResp.status}): ${e.message || 'перевірте owner/repo'}`, 'err');
+        return;
+      }
+      const r = await rResp.json();
+      // 3. Перевірити гілку
+      const bResp = await fetch(`https://api.github.com/repos/${s.owner}/${s.repo}/branches/${encodeURIComponent(s.branch)}`, { headers: ghHeaders(s) });
+      if (!bResp.ok) {
+        showGhStatus(`❌ Гілку «${s.branch}» не знайдено. Доступні: main, master`, 'err');
+        return;
+      }
+      // 4. Чи є файл
+      const fResp = await fetch(ghApiUrl(s, 'get'), { headers: ghHeaders(s) });
+      let fileInfo = '';
+      if (fResp.ok) {
+        const f = await fResp.json();
+        fileInfo = `📁 Файл існує: ${f.size} байтів, SHA: <code style="font-family:var(--font-mono); font-size: 10px;">${f.sha.slice(0, 7)}</code>. Буде оновлено.`;
+      } else if (fResp.status === 404) {
+        fileInfo = '📄 Файлу ще немає — буде створено новий.';
+      } else {
+        fileInfo = `⚠ Не вдалось перевірити файл (HTTP ${fResp.status})`;
+      }
+      showGhStatus(
+        `✅ Зв'язок OK<br>` +
+        `👤 Token user: <strong>${u.login}</strong> (scopes: ${uResp.headers.get('x-oauth-scopes') || 'fine-grained'})<br>` +
+        `📦 Репо: <strong>${r.full_name}</strong> (${r.private ? 'private' : 'public'})<br>` +
+        `🌿 Гілка: <strong>${s.branch}</strong><br>` +
+        fileInfo,
+        'ok'
+      );
+    } catch (e) {
+      showGhStatus('❌ Мережа: ' + e.message, 'err');
+    }
+  }
+
+  async function ghSaveToRepo() {
+    saveGhSettingsToLocal();
+    const s = getGhSettings();
+    if (!s.token) { showGhStatus('⚠ Введіть токен', 'err'); return; }
+    if (!s.owner || !s.repo || !s.path) { showGhStatus('⚠ Заповніть owner, repo, path', 'err'); return; }
+
+    const btn = document.getElementById('ghSaveBtn');
+    btn.disabled = true; btn.textContent = '⏳ Збереження...';
+    showGhStatus('🚀 Готуємо файл і комітимо...', 'info');
+
+    try {
+      // 1. Перевірити існуючий файл (отримати SHA)
+      let sha = null;
+      const fResp = await fetch(ghApiUrl(s, 'get'), { headers: ghHeaders(s) });
+      if (fResp.ok) {
+        const f = await fResp.json();
+        sha = f.sha;
+      } else if (fResp.status !== 404) {
+        const e = await fResp.json().catch(() => ({}));
+        throw new Error('Не вдалось перевірити файл: ' + (e.message || fResp.status));
+      }
+
+      // 2. Згенерувати вміст
+      const ov = buildOverride();
+      const js = '// AUTO-GENERATED by alfa.copy.print admin panel\n' +
+                 '// Source: ' + window.location.href + '\n' +
+                 '// Generated: ' + ov.updatedAt + '\n' +
+                 '// Products: ' + ov.products.length + ' | Categories: ' + ov.categories.length + '\n\n' +
+                 'window.CATALOG_OVERRIDE_LOADED = true;\n' +
+                 'window.CATALOG_OVERRIDE = ' + JSON.stringify(ov, null, 2) + ';\n';
+
+      // 3. Base64 з UTF-8
+      const b64 = btoa(unescape(encodeURIComponent(js)));
+
+      // 4. PUT
+      const body = {
+        message: `auto: catalog-override update (${new Date().toLocaleString('uk-UA')}) — ${ov.products.length} тов., ${ov.categories.length} кат.`,
+        content: b64,
+        branch: s.branch
+      };
+      if (sha) body.sha = sha;
+      if (s.committerName && s.committerEmail) {
+        body.committer = { name: s.committerName, email: s.committerEmail };
+      }
+
+      const putResp = await fetch(ghApiUrl(s, 'put'), {
+        method: 'PUT',
+        headers: { ...ghHeaders(s), 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (!putResp.ok) {
+        const e = await putResp.json().catch(() => ({}));
+        throw new Error(`GitHub API ${putResp.status}: ${e.message || 'помилка'}`);
+      }
+
+      const result = await putResp.json();
+      const commit = result.commit || {};
+      const commitUrl = commit.html_url || `https://github.com/${s.owner}/${s.repo}/commits`;
+      showGhStatus(
+        `✅ Збережено в GitHub!<br>` +
+        `📝 Коміт: <code style="font-family:var(--font-mono); font-size: 10px;">${(commit.sha || '').slice(0, 7)}</code> — <a href="${commitUrl}" target="_blank" style="color: var(--accent);">відкрити на GitHub</a><br>` +
+        `📁 Файл: <code>${s.path}</code> у <code>${s.owner}/${s.repo}@${s.branch}</code><br>` +
+        `⏱ GitHub Pages оновиться через 1-2 хв. Перевірте: <a href="https://lavandaaudit.github.io/${s.repo === 'aa' ? '' : s.repo + '/'}" target="_blank" style="color: var(--accent);">сайт</a>`,
+        'ok'
+      );
+      toast('Збережено в GitHub. Сайт оновиться через 1-2 хв.', 'ok');
+    } catch (e) {
+      showGhStatus('❌ Помилка: ' + e.message, 'err');
+      toast('Помилка збереження в GitHub', 'err');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '⬆ Зберегти в GitHub';
+    }
+  }
+
+  function ghClearToken() {
+    GH_KEYS.forEach(k => localStorage.removeItem(k));
+    document.getElementById('ghToken').value = '';
+    document.getElementById('ghOwner').value = 'lavandaaudit';
+    document.getElementById('ghRepo').value = 'aa';
+    document.getElementById('ghBranch').value = 'main';
+    document.getElementById('ghPath').value = 'catalog-override.js';
+    document.getElementById('ghCommitterName').value = 'alfa-admin';
+    document.getElementById('ghCommitterEmail').value = 'admin@alfa.local';
+    showGhStatus('Токен і налаштування видалено з localStorage.', 'info');
+    toast('Налаштування GitHub скинуто.', 'ok');
+    updatePublishBtnVisibility();
+  }
+
   // ---------- Wire up ----------
   document.getElementById('productSearch').addEventListener('input', renderProductList);
   document.getElementById('categoryFilter').addEventListener('change', renderProductList);
@@ -3044,6 +3309,29 @@ window.__DEFAULT_CATEGORIES = [
   });
   document.getElementById('previewBtn').addEventListener('click', openPreview);
 
+  // GitHub direct publish listeners
+  document.getElementById('ghTestBtn').addEventListener('click', ghCheckConnection);
+  document.getElementById('ghSaveBtn').addEventListener('click', ghSaveToRepo);
+  document.getElementById('ghClearBtn').addEventListener('click', ghClearToken);
+  // Save settings to localStorage on input + show/hide publish button
+  ['ghToken','ghOwner','ghRepo','ghBranch','ghPath','ghCommitterName','ghCommitterEmail'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      const map = { ghToken:'gh_token', ghOwner:'gh_owner', ghRepo:'gh_repo', ghBranch:'gh_branch', ghPath:'gh_path', ghCommitterName:'gh_committer_name', ghCommitterEmail:'gh_committer_email' };
+      localStorage.setItem(map[id], document.getElementById(id).value);
+      updatePublishBtnVisibility();
+    });
+  });
+  // Publish button in topbar — same as ghSaveBtn but jumps to export tab on success
+  document.getElementById('publishBtn').addEventListener('click', async () => {
+    await ghSaveToRepo();
+  });
+
+  function updatePublishBtnVisibility() {
+    const token = localStorage.getItem('gh_token');
+    const btn = document.getElementById('publishBtn');
+    btn.style.display = token ? 'inline-flex' : 'none';
+  }
+
   // ---------- Init ----------
   populateCategoryFilter();
   renderProductList();
@@ -3052,6 +3340,8 @@ window.__DEFAULT_CATEGORIES = [
   renderPrices();
   updateCounts();
   updateStats();
+  loadGhSettings();
+  updatePublishBtnVisibility();
   setSaveIndicator('saved');
 })();
 </script>
