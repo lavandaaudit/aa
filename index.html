@@ -362,8 +362,9 @@
       border-bottom: 1px dashed var(--border);
     }
     .sub-row:last-child { border-bottom: none; }
-    .sub-row .sub-icon { font-size: 14px; width: 20px; text-align: center; }
-    .sub-row .sub-name { flex: 1; font-size: 12px; }
+    .sub-row .sub-icon { font-size: 14px; width: 28px; text-align: center; padding: 4px 0; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--r-sm); }
+    .sub-row .sub-name { flex: 1; font-size: 12px; padding: 5px 8px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--r-sm); color: var(--text-main); }
+    .sub-row .sub-name:focus, .sub-row .sub-icon:focus { outline: none; border-color: var(--border-focus); }
     .sub-row .sub-key {
       font-family: var(--font-mono); font-size: 10px; color: var(--text-dim);
     }
@@ -1744,15 +1745,88 @@ window.__DEFAULT_PRODUCTS = [
 
 ];
 window.__DEFAULT_CATEGORIES = [
-      { key: 'polygraphy', label: 'Візитки і ділова поліграфія', short: 'Візитки', icon: '💳', desc: 'Візитки (стандарт, євро, soft-touch, зі згином) та бірки/ярлики на картоні 300–350 г/м².' },
-      { key: 'advertising', label: 'Рекламна поліграфія', short: 'Реклама', icon: '📣', desc: 'Флаєри всіх форматів, купони, квитки, воблери, шельтхалтери, тейбл-тенти — все, що продає.' },
-      { key: 'stickers', label: 'Нахлейки та етикетки', short: 'Нахлейки', icon: '🏷️', desc: 'Стікери на папері та вінілі, стікерпаки, етикетки для тари, пломби-нашліпки.' },
-      { key: 'posters', label: 'Постери та афіші', short: 'Постери', icon: '🖼️', desc: 'Постери А4–А3, афіші заходів, навчальні плакати, фотодрук.' },
-      { key: 'booklets', label: 'Буклети та багатосторінкові видання', short: 'Буклети', icon: '📖', desc: 'Буклети зі згинами, брошури на скобі/пружині, каталоги. Тираж до 1000 прим. — далі офсет.' },
-      { key: 'office', label: 'Офісна документація', short: 'Офіс', icon: '🗂️', desc: 'Фірмові бланки, конверти, грамоти, презентації, блокноти, папки, меню.' },
-      { key: 'gifts', label: 'Подарунки та календарі', short: 'Подарунки', icon: '🎁', desc: 'Листівки, запрошення, настільні та настінні календарі, плнінги, сувеніри.' },
-      { key: 'merch', label: 'Мерч з логотипом', short: 'Мерч', icon: '👕', desc: 'Одяг та аксесуари з вашим логотипом. Друк на готових виробах (DTF/термоперенесення): тираж × ціна/шт + макетування (+).' },
-      { key: 'packages', label: 'Готові пакунки', short: 'Пакунки', icon: '📦', desc: 'Комплексні набори поліграфії зі знижкою ~10%. Допечатна підготовка всіх макетів уже включена у ціну.' }
+      { key: 'digital', label: 'Цифровий друк', short: 'Цифровий', icon: '🖨️',
+        desc: 'Малий та середній тираж (1–1000 прим.). Швидко, гнучко, з персоналізацією. Візитки, флаєри, листівки, буклети, стікери.',
+        subs: [
+          { key: 'business-cards',    label: 'Візитки',              icon: '💳' },
+          { key: 'flyers',            label: 'Флаєри',                icon: '📄' },
+          { key: 'postcards',         label: 'Листівки',             icon: '✉️' },
+          { key: 'invitations',       label: 'Запрошення',           icon: '💌' },
+          { key: 'stickers-labels',  label: 'Стікери та етикетки',   icon: '🏷️' },
+          { key: 'posters',          label: 'Постери та афіші',      icon: '🖼️' },
+          { key: 'booklets',         label: 'Буклети та брошури',    icon: '📖' },
+          { key: 'office-print',     label: 'Офісна поліграфія',    icon: '🗂️' },
+          { key: 'tags-labels',       label: 'Бірки та ярлики',      icon: '🏷️' },
+          { key: 'calendars-digital', label: 'Календарі',            icon: '📅' }
+        ] },
+      { key: 'offset', label: 'Офсетний друк', short: 'Офсет', icon: '🏭',
+        desc: 'Великі тиражі від 1000 прим. — найнижча ціна за одиницю. Каталоги, книги, журнали, фірмові бланки.',
+        subs: [
+          { key: 'catalogs',          label: 'Каталоги',                  icon: '📕' },
+          { key: 'books-brochures',  label: 'Книги та брошури',          icon: '📚' },
+          { key: 'magazines',        label: 'Журнали',                   icon: '📰' },
+          { key: 'folders',          label: 'Папки фірмові',             icon: '📁' },
+          { key: 'letterheads',      label: 'Фірмові бланки',            icon: '📄' },
+          { key: 'calendars-offset', label: 'Календарі (великі тиражі)', icon: '📆' },
+          { key: 'large-run-flyers', label: 'Флаєри великим тиражем',    icon: '📋' }
+        ] },
+      { key: 'merch', label: 'Мерч з логотипом', short: 'Мерч', icon: '👕',
+        desc: 'Одяг та аксесуари з вашим логотипом. Друк на готових виробах (DTF/термоперенесення). Тираж × ціна/шт + макетування.',
+        subs: [
+          { key: 'tshirts',       label: 'Футболки',           icon: '👕' },
+          { key: 'hoodies',       label: 'Худі та світшоти',   icon: '🧥' },
+          { key: 'caps-hats',     label: 'Кепки та шапки',     icon: '🧢' },
+          { key: 'bags-backpacks',label: 'Сумки та рюкзаки',   icon: '🎒' },
+          { key: 'drinkware',     label: 'Кружки та флешки',   icon: '🥤' },
+          { key: 'accessories',   label: 'Аксесуари',          icon: '🔑' },
+          { key: 'pins-keychains',label: 'Значки та брелоки',  icon: '📌' }
+        ] },
+      { key: 'pos-material', label: 'POS матеріали', short: 'POS', icon: '🏪',
+        desc: 'Матеріали для точки продажу: воблери, шелфтокери, тейбл-тенти, цінники, диспенсери. Привертає увагу на полиці.',
+        subs: [
+          { key: 'wobblers',     label: 'Воблери',              icon: '🎯' },
+          { key: 'shelftalkers', label: 'Шелфтокери',           icon: '📐' },
+          { key: 'table-tents',  label: 'Тейбл-тенти',          icon: '⛺' },
+          { key: 'doorhangers',  label: 'Дорхенгери',           icon: '🚪' },
+          { key: 'neckhangers',  label: 'Некхенгери',           icon: '🍾' },
+          { key: 'price-tags',   label: 'Цінники та бірки',     icon: '🏷️' },
+          { key: 'dispensers',   label: 'Диспенсери та стійки', icon: '🗂️' },
+          { key: 'stoppers',     label: 'Стопери',              icon: '🛑' }
+        ] },
+      { key: 'dtf', label: 'DTF друк', short: 'DTF', icon: '🎨',
+        desc: 'Direct-to-Film — повнокольорові еластичні принти на текстиль та інші поверхні. Стійкі до прання, будь-якого розміру.',
+        subs: [
+          { key: 'dtf-apparel',       label: 'Принти на одяг',     icon: '👕' },
+          { key: 'dtf-textile',       label: 'Принти на текстиль', icon: '🧵' },
+          { key: 'dtf-transfers',     label: 'Готові трансфери',   icon: '✂️' },
+          { key: 'dtf-large-format',  label: 'Великі формати',     icon: '📐' },
+          { key: 'dtf-stickers',      label: 'DTF стікери',        icon: '🏷️' }
+        ] },
+      { key: 'textile', label: 'Текстиль', short: 'Текстиль', icon: '🧵',
+        desc: 'Текстильні вироби під нанесення: футболки, худі, поло, робочий одяг, рушники, постільна білизна, тканинні сумки.',
+        subs: [
+          { key: 'textile-tshirts',  label: 'Футболки',            icon: '👕' },
+          { key: 'textile-hoodies',  label: 'Худі та світшоти',     icon: '🧥' },
+          { key: 'polo-shirts',      label: 'Поло',                icon: '👕' },
+          { key: 'workwear',         label: 'Робочий одяг',        icon: '🦺' },
+          { key: 'towels',           label: 'Рушники',             icon: '🧖' },
+          { key: 'bed-linen',        label: 'Постільна білизна',   icon: '🛏️' },
+          { key: 'fabric-bags',      label: 'Тканинні сумки',      icon: '👜' }
+        ] },
+      { key: 'fan-shop', label: 'Fan shop', short: 'Fan shop', icon: '⚽',
+        desc: 'Брендована сувенірна продукція для фанатів: значки, брелоки, стікерпаки, прапори, шарфи, аксесуари з символікою.',
+        subs: [
+          { key: 'fan-pins',        label: 'Значки та брелоки', icon: '📌' },
+          { key: 'fan-stickers',    label: 'Стикерпаки',        icon: '🎨' },
+          { key: 'fan-apparel',     label: 'Одяг фаната',       icon: '👕' },
+          { key: 'fan-flags',       label: 'Прапори та банери', icon: '🚩' },
+          { key: 'fan-scarves',     label: 'Шарфи',             icon: '🧣' },
+          { key: 'fan-souvenirs',   label: 'Сувеніри',         icon: '🎁' },
+          { key: 'fan-accessories', label: 'Аксесуари',        icon: '🎒' }
+        ] },
+      { key: 'packages', label: 'Готові пакунки', short: 'Пакунки', icon: '📦',
+        desc: 'Комплексні набори зі знижкою ~10%. Допечатна підготовка всіх макетів уже включена у ціну.',
+        subs: [] }
     ];
 </script>
 
@@ -1764,6 +1838,10 @@ window.__DEFAULT_CATEGORIES = [
   const STORAGE_KEY = 'alfaAdminState_v1';
   const PHOTO_STORAGE_LIMIT = 4 * 1024 * 1024; // 4MB max for photos in localStorage
 
+  // Старі ключі категорій до реструктуризації — за їх наявністю у сохраненому стані
+  // ми розпізнаємо, що треба мігрувати на нову структуру.
+  const LEGACY_CATEGORY_KEYS = ['polygraphy', 'advertising', 'stickers', 'posters', 'booklets', 'office', 'gifts'];
+
   // ---------- State ----------
   let state = loadState();
   let currentProductId = null;
@@ -1774,7 +1852,9 @@ window.__DEFAULT_CATEGORIES = [
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const s = JSON.parse(raw);
-        if (s && Array.isArray(s.products) && Array.isArray(s.categories)) return s;
+        if (s && Array.isArray(s.products) && Array.isArray(s.categories)) {
+          return migrateCategories(s);
+        }
       }
     } catch(e) { console.warn('load state failed:', e); }
     return {
@@ -1783,6 +1863,25 @@ window.__DEFAULT_CATEGORIES = [
       prices: JSON.parse(JSON.stringify(window.__DEFAULT_PRICES || {})),
       updatedAt: null
     };
+  }
+
+  /**
+   * Міграція категорій v1 → v2.
+   * Якщо у сохраненому стані є будь-який зі старих ключів (polygraphy/advertising/stickers/...),
+   * повністю замінюємо categories на нові дефолти. Товари та ціни НЕ чіпаємо —
+   * користувач потім переназначить категорії у товарах (бачитиме ⚠ Невідома).
+   * Користувацькі категорії (не з LEGACY_CATEGORY_KEYS) зберігаються.
+   */
+  function migrateCategories(s) {
+    if (!Array.isArray(s.categories)) return s;
+    const hasLegacy = s.categories.some(c => LEGACY_CATEGORY_KEYS.indexOf(c.key) >= 0);
+    if (!hasLegacy) return s;
+    console.info('[alfa-admin] Мігрую категорії зі старої структури на нову (v2).');
+    // зберегти користувацькі категорії (ті, що не входять у старі дефолти)
+    const userCustom = s.categories.filter(c => LEGACY_CATEGORY_KEYS.indexOf(c.key) < 0);
+    const newCats = (window.__DEFAULT_CATEGORIES || []).map(c => ({...c}));
+    s.categories = newCats.concat(userCustom);
+    return s;
   }
 
   let saveTimer = null;
@@ -1986,6 +2085,9 @@ window.__DEFAULT_CATEGORIES = [
           <div>
             <label>Категорія *</label>
             <select data-f="category">
+              ${p.category && !state.categories.find(c => c.key === p.category)
+                ? `<option value="${escapeHtml(p.category)}" selected>⚠ Невідома: ${escapeHtml(p.category)}</option>`
+                : ''}
               ${state.categories.map(c => `<option value="${escapeHtml(c.key)}" ${p.category === c.key ? 'selected' : ''}>${escapeHtml(c.label || c.key)}</option>`).join('')}
             </select>
           </div>
@@ -2467,15 +2569,15 @@ window.__DEFAULT_CATEGORIES = [
           <div class="sub-list">
             ${subs.map((s, i) => `
               <div class="sub-row">
-                <span class="sub-icon">${escapeHtml(s.icon || '•')}</span>
-                <span class="sub-name">${escapeHtml(s.label || s.key)}</span>
+                <input type="text" class="sub-icon" data-sub-edit="icon"  data-cat="${escapeHtml(c.key)}" data-i="${i}" value="${escapeHtml(s.icon || '•')}" maxlength="4" title="Іконка">
+                <input type="text" class="sub-name" data-sub-edit="label" data-cat="${escapeHtml(c.key)}" data-i="${i}" value="${escapeHtml(s.label || s.key)}" title="Назва підкатегорії">
                 <span class="sub-key">${escapeHtml(s.key)}</span>
                 <button class="sub-del" data-cat="${escapeHtml(c.key)}" data-sub-i="${i}" title="Видалити">×</button>
               </div>
             `).join('')}
           </div>
           <div class="sub-add-form">
-            <input type="text" data-sub-add-key="${escapeHtml(c.key)}" placeholder="key" style="flex: 0.5;">
+            <input type="text" data-sub-add-key="${escapeHtml(c.key)}" placeholder="key" style="flex: 0.5;" title="Ключ підкатегорії (англ), генерується з назви якщо порожнє">
             <input type="text" data-sub-add-label="${escapeHtml(c.key)}" placeholder="Назва підкатегорії">
             <button class="btn btn-sm" data-sub-add-btn="${escapeHtml(c.key)}">+</button>
           </div>
@@ -2507,6 +2609,18 @@ window.__DEFAULT_CATEGORIES = [
         if (!c || !c.subs) return;
         c.subs.splice(parseInt(b.dataset.subI, 10), 1);
         renderCategories();
+        scheduleSave();
+      });
+    });
+    // inline-редагування іконки та назви підкатегорії (data-sub-edit)
+    document.querySelectorAll('[data-sub-edit]').forEach(el => {
+      el.addEventListener('input', () => {
+        const c = state.categories.find(x => x.key === el.dataset.cat);
+        if (!c || !c.subs) return;
+        const i = parseInt(el.dataset.i, 10);
+        if (!c.subs[i]) return;
+        c.subs[i][el.dataset.subEdit] = el.value;
+        // не перерендерюємо під час введення (щоб не губити фокус) — лише зберігаємо
         scheduleSave();
       });
     });
@@ -3292,6 +3406,8 @@ window.__DEFAULT_CATEGORIES = [
   document.getElementById('productSearch').addEventListener('input', renderProductList);
   document.getElementById('categoryFilter').addEventListener('change', renderProductList);
   document.getElementById('addProductBtn').addEventListener('click', addProduct);
+  // БАГФІКС: кнопка «+ Нова категорія» раніше не мала обробника — тепер викликає addCategory()
+  document.getElementById('addCategoryBtn').addEventListener('click', addCategory);
   document.getElementById('exportBtn').addEventListener('click', exportOverride);
   document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importJsonInput').click());
   document.getElementById('resetBtn').addEventListener('click', resetAll);
